@@ -1,0 +1,85 @@
+      <!--=====================================-->
+      <!--=     Footer Section Area Start     =-->
+      <!--=====================================-->
+      <footer class="footer-wrap-layout2">
+        <div class="footer2 footer-top">
+          <div class="container">
+            <div class="row">
+              <div class="col-lg-7 wow fadeInLeft animated" data-wow-delay="0.1s" data-wow-duration="1s">
+                <div class="footer-widgets">
+                  <a href="/" class="footer-logo"><img src="{{ URL::asset('image/logo-light.svg')}}" alt="Footer Logo" width="200" height="37"></a>
+                  <nav class="template-secondary-menu">
+                    <ul class="menu">
+                      <!--
+                      <li class="menu-item">
+                        <a href="/">HOME</a>
+                      </li>
+                      <li class="menu-item">
+                        <a href="about.html"> PAGES</a>
+                      </li>
+                      <li class="menu-item">
+                        <a href="speaker.html"> SPEAKERS</a>
+                      </li>
+                      -->
+                      <li class="menu-item">
+                        <a href="/evento">EVENTOS</a>
+                      </li>
+                      <li class="menu-item">
+                        <a href="/asistencia">ASISTENCIAS</a>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+              <!--
+              <div class="col-lg-5 wow fadeInLeft animated" data-wow-delay="0.3s" data-wow-duration="1s">
+                <div class="footer-widgets">
+                  <h3 class="widget-title">Get Subscribed Today!</h3>
+                  <div class="footer-newsletter">
+                    <form>
+                      <input type="email" class="form-control" placeholder="Email Address">
+                      <button type="submit" class="btn-fill style-one">SUBSCRIBE</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            -->
+            </div>
+          </div>
+        </div>
+        <div class="footer2 footer-bottom">
+          <div class="container">
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
+              <div class="copyright-text">&copy;<span id="currentYear"></span><a href="https://.tinq.pe" class="link-text" rel="nofollow">ASISSTIFY.</a>All
+                Rights Reserved.</div>
+              <!--
+              <ul class="footer-social">
+                <li>
+                  <a target="_blank" href="https://www.facebook.com/radiustheme" class="facebook"><i
+                                class="fab fa-facebook-f"></i></a>
+                </li>
+                <li>
+                  <a target="_blank" href="https://twitter.com/radiustheme" class="twitter"><i
+                                class="fab fa-twitter"></i></a>
+                </li>
+                <li>
+                  <a target="_blank" href="https://www.facebook.com/radiustheme" class="linkedin"><i
+                                class="fab fa-linkedin-in"></i></a>
+                </li>
+                <li>
+                  <a target="_blank" href="https://www.facebook.com/radiustheme" class="instagram"><i
+                                class="fab fa-instagram"></i></a>
+                </li>
+                <li>
+                  <a target="_blank" href="https://www.pinterest.com/radius_theme/" class="pinterest"><i
+                                class="fab fa-pinterest-p"></i></a>
+                </li>
+              </ul>
+    -->
+            </div>
+          </div>
+        </div>
+      </footer>
+      <!--=====================================-->
+      <!--=      Footer Section Area End      =-->
+      <!--=====================================-->
