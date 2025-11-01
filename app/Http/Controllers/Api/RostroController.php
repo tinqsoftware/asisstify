@@ -33,7 +33,7 @@ class RostroController extends Controller
     public function marcar(Request $request)
     {
         $request->validate([
-            'actividad_id' => 'required|exists:e_actividades,id',
+            'actividad_id' => 'required|exists:E_actividades,id',
             'nombre' => 'required|string'
         ]);
 
