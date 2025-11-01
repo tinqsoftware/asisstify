@@ -368,26 +368,26 @@ class E_EventoController extends Controller
 
                 // entidad / grupo (tomamos el primero que tenga)
                 // === ENTIDAD ===
-                $entidadUsuario = \DB::table('e_grupo_usuarios')
-                    ->join('e_grupos_entidad', 'e_grupos_entidad.id', '=', 'e_grupo_usuarios.grupo_id')
-                    ->join('e_entidades', 'e_entidades.id', '=', 'e_grupos_entidad.entidad_id')
-                    ->where('e_grupo_usuarios.usuario_id', $usuarioId)
+                $entidadUsuario = \DB::table('E_grupo_usuarios')
+                    ->join('E_grupos_entidad', 'E_grupos_entidad.id', '=', 'E_grupo_usuarios.grupo_id')
+                    ->join('e_entidades', 'e_entidades.id', '=', 'E_grupos_entidad.entidad_id')
+                    ->where('E_grupo_usuarios.usuario_id', $usuarioId)
                     ->select('e_entidades.nombre as entidad_nombre')
                     ->first();
 
                 $entidadNombre = $entidadUsuario->entidad_nombre ?? '—';
 
                 // === GRUPO ===
-                $grupoUsuario = \DB::table('e_grupo_usuarios')
-                    ->join('e_grupos_entidad', 'e_grupos_entidad.id', '=', 'e_grupo_usuarios.grupo_id')
-                    ->where('e_grupo_usuarios.usuario_id', $usuarioId)
-                    ->select('e_grupos_entidad.nombre')
+                $grupoUsuario = \DB::table('E_grupo_usuarios')
+                    ->join('E_grupos_entidad', 'E_grupos_entidad.id', '=', 'E_grupo_usuarios.grupo_id')
+                    ->where('E_grupo_usuarios.usuario_id', $usuarioId)
+                    ->select('E_grupos_entidad.nombre')
                     ->first();
 
                 $grupoNombre = $grupoUsuario->nombre ?? '—';
 
                 // si tuvieras relación usuario -> entidad -> grupos la puedes completar aquí
-                // pero en tus tablas tienes: e_entidad_usuarios y e_grupo_usuarios
+                // pero en tus tablas tienes: e_entidad_usuarios y E_grupo_usuarios
                 // como no las hemos cargado aquí, dejamos — para no romper
 
                 // fecha y hora de la última acción
@@ -454,17 +454,17 @@ class E_EventoController extends Controller
 
                 $ultimo = $regs->sortByDesc('created_at')->first();
 
-                $entidadUsuario = \DB::table('e_grupo_usuarios')
-                    ->join('e_grupos_entidad', 'e_grupos_entidad.id', '=', 'e_grupo_usuarios.grupo_id')
-                    ->join('e_entidades', 'e_entidades.id', '=', 'e_grupos_entidad.entidad_id')
-                    ->where('e_grupo_usuarios.usuario_id', $usuarioId)
+                $entidadUsuario = \DB::table('E_grupo_usuarios')
+                    ->join('E_grupos_entidad', 'E_grupos_entidad.id', '=', 'E_grupo_usuarios.grupo_id')
+                    ->join('e_entidades', 'e_entidades.id', '=', 'E_grupos_entidad.entidad_id')
+                    ->where('E_grupo_usuarios.usuario_id', $usuarioId)
                     ->select('e_entidades.nombre as entidad_nombre')
                     ->first();
 
-                $grupoUsuario = \DB::table('e_grupo_usuarios')
-                    ->join('e_grupos_entidad', 'e_grupos_entidad.id', '=', 'e_grupo_usuarios.grupo_id')
-                    ->where('e_grupo_usuarios.usuario_id', $usuarioId)
-                    ->select('e_grupos_entidad.nombre')
+                $grupoUsuario = \DB::table('E_grupo_usuarios')
+                    ->join('E_grupos_entidad', 'E_grupos_entidad.id', '=', 'E_grupo_usuarios.grupo_id')
+                    ->where('E_grupo_usuarios.usuario_id', $usuarioId)
+                    ->select('E_grupos_entidad.nombre')
                     ->first();
 
                 return [
