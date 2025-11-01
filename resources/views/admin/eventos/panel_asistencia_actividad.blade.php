@@ -32,8 +32,8 @@
   }
 
   #cameraMirror {
-    width: 600px;
-    height: 600px;
+    width: 800px;
+    height: 800px;
     border-radius: 50%;
     object-fit: cover;
     border: 3px solid white;
