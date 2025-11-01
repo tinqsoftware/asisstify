@@ -370,9 +370,9 @@ class E_EventoController extends Controller
                 // === ENTIDAD ===
                 $entidadUsuario = \DB::table('E_grupo_usuarios')
                     ->join('E_grupos_entidad', 'E_grupos_entidad.id', '=', 'E_grupo_usuarios.grupo_id')
-                    ->join('e_entidades', 'e_entidades.id', '=', 'E_grupos_entidad.entidad_id')
+                    ->join('E_entidades', 'E_entidades.id', '=', 'E_grupos_entidad.entidad_id')
                     ->where('E_grupo_usuarios.usuario_id', $usuarioId)
-                    ->select('e_entidades.nombre as entidad_nombre')
+                    ->select('E_entidades.nombre as entidad_nombre')
                     ->first();
 
                 $entidadNombre = $entidadUsuario->entidad_nombre ?? '—';
@@ -456,9 +456,9 @@ class E_EventoController extends Controller
 
                 $entidadUsuario = \DB::table('E_grupo_usuarios')
                     ->join('E_grupos_entidad', 'E_grupos_entidad.id', '=', 'E_grupo_usuarios.grupo_id')
-                    ->join('e_entidades', 'e_entidades.id', '=', 'E_grupos_entidad.entidad_id')
+                    ->join('E_entidades', 'E_entidades.id', '=', 'E_grupos_entidad.entidad_id')
                     ->where('E_grupo_usuarios.usuario_id', $usuarioId)
-                    ->select('e_entidades.nombre as entidad_nombre')
+                    ->select('E_entidades.nombre as entidad_nombre')
                     ->first();
 
                 $grupoUsuario = \DB::table('E_grupo_usuarios')
