@@ -15,48 +15,7 @@
                     </div>
                     <nav id="dropdown" class="template-main-menu menu-text-light">
                       <ul class="menu">
-                        <!--
-                        <li class="menu-item menu-item-has-children">
-                          <a href="/">HOME</a>
-                          <ul class="sub-menu">
-                            <li class="menu-item"><a href="/">Main Home</a>
-                            </li>
-                            <li class="menu-item"><a href="index2.html">Design Conference</a>
-                            </li>
-                            <li class="menu-item"><a href="index3.html">Web Seminar</a>
-                            </li>
-                            <li class="menu-item"><a href="index4.html">Digital Event</a>
-                            </li>
-                          </ul>
-                        </li>
-                        <li class="menu-item menu-item-has-children mega-menu mega-menu-col-2">
-                          <a href="about.html">PAGES</a>
-                          <ul class="sub-menu">
-                            <li class="menu-item">
-                              <ul class="sub-menu">
-                                <li class="menu-item"><a href="about.html">About</a></li>
-                                <li class="menu-item"><a href="pricing.html">Pricing</a></li>
-                                <li class="menu-item"><a href="gallery.html">Gallery</a></li>
-                                <li class="menu-item"><a href="venue.html">Venu</a></li>
-                              </ul>
-                            </li>
-                            <li class="menu-item">
-                              <ul class="sub-menu">
-                                <li class="menu-item"><a href="brand.html">Brand</a></li>
-                                <li class="menu-item"><a href="faq.html">Faq</a></li>
-                                <li class="menu-item"><a href="404.html">404 Error</a></li>
-                                <li class="menu-item"><a href="contact.html">Contact Us</a></li>
-                              </ul>
-                            </li>
-                          </ul>
-                        </li>
-                        <li class="menu-item menu-item-has-children">
-                          <a href="speaker.html">SPEAKERS</a>
-                          <ul class="sub-menu">
-                            <li class="menu-item"><a href="speaker.html">Speaker</a></li>
-                            <li class="menu-item"><a href="speaker-single.html">Speaker Single</a></li>
-                          </ul>
-                        </li>-->
+
                         <li class="menu-item menu-item-has-children">
                           <a href="/">INICIO</a>
                         </li>
@@ -69,69 +28,36 @@
                         <li class="menu-item menu-item-has-children">
                           <a href="/contactanos">CREA TU EVENTO</a>
                         </li>
-                        <!--
+
+                        @if(Auth::user())
                         <li class="menu-item menu-item-has-children">
-                          <a href="portfolio-two-col-grid.html">PORTFOLIO</a>
+                          <a href="#">ADMIN</a>
                           <ul class="sub-menu">
-                            <li class="menu-item"><a href="portfolio-two-col-grid.html">Standard Two Column</a></li>
-                            <li class="menu-item"><a href="portfolio-three-col-grid1.html">Standard Three Column</a>
-                            </li>
-                            <li class="menu-item"><a href="portfolio-three-col-grid2.html">Three Column Grid</a></li>
-                            <li class="menu-item"><a href="portfolio-four-col-grid.html">Four Column Grid</a></li>
-                            <li class="menu-item"><a href="portfolio-four-col-full-wide.html">Four Column Full Wide</a></li>
+                            @if(Auth::user()->esSuperAdmin())
+                              <li><a href="{{ route('admin.entidades.index') }}">Entidades</a></li>
+                              <li><a href="{{ route('admin.roles.index') }}">Roles de Entidad</a></li>
+                            @endif
+
+                            @if(Auth::user()->tieneRolEntidad('ADMIN') || Auth::user()->tieneRolEntidad('STAFF'))
+                              <li><a href="{{ route('admin.grupos.index') }}">Grupos</a></li>
+                              <li><a href="{{ route('admin.eventos.index') }}">Eventos</a></li>
+                            @endif
                           </ul>
                         </li>
+
                         <li class="menu-item menu-item-has-children">
-                          <a href="blog-grid.html">BLOG</a>
-                          <ul class="sub-menu">
-                            <li class="menu-item"><a href="blog-grid.html">Blog Grid</a></li>
-                            <li class="menu-item"><a href="blog-list.html">Blog List</a></li>
-                            <li class="menu-item"><a href="blog-single.html">Blog Single</a></li>
-                          </ul>
+                          <a href="{{ route('mis.asistencias') }}">Mis Asistencias</a>
                         </li>
-                      -->
+                        @endif
+
                       </ul>
                     </nav>
-                    <!--
-                    <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
-                      <ul class="header-action-items" >
-                        
-                          <li class="search-wrap">
-                            <a href="#template-search" title="Search">
-                              <svg width="21" height="21" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M20 20L15.514 15.506L20 20ZM18 9.5C18 11.7543 17.1045 13.9163 15.5104 15.5104C13.9163 17.1045 11.7543 18 9.5 18C7.24566 18 5.08365 17.1045 3.48959 15.5104C1.89553 13.9163 1 11.7543 1 9.5C1 7.24566 1.89553 5.08365 3.48959 3.48959C5.08365 1.89553 7.24566 1 9.5 1C11.7543 1 13.9163 1.89553 15.5104 3.48959C17.1045 5.08365 18 7.24566 18 9.5V9.5Z" stroke-width="2" stroke-linecap="round" />
-                              </svg>
-                            </a>
-                          </li>
-                        -->
+
                         
                           @guest
 
                             <ul class="header-action-items" >
-                              <!--
-                              @if (Route::has('login'))
-                                <li class="header-action-item d-none d-xl-block">
-                                    <a href="{{ route('login') }}" class="item-btn btn-fill style-two">Ingresar</a>
-                                </li>
-                              @endif
 
-                              @if (Route::has('register'))
-                                <li class="header-action-item d-none d-xl-block">
-                                    <a href="{{ route('register') }}" class="btn-fill style-four" >Registrate</a>
-                                </li>
-                              @endif
-    -->
-                              <!--
-                              <li class="header-action-item">
-                                <button type="button" class="offcanvas-menu-btn style-one menu-status-open">
-                                  <span class="menu-btn-icon">
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  </span>
-                                </button>
-                              </li>
-    -->
                             </ul>
                           @else
                           <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
@@ -153,17 +79,7 @@
                                       </form>
                                   </div>
                               </li>
-                               <!-- butón amburguesa 
-                              <li class="header-action-item">
-                                <button type="button" class="offcanvas-menu-btn style-one menu-status-open">
-                                  <span class="menu-btn-icon">
-                                  <span></span>
-                                  <span></span>
-                                  <span></span>
-                                  </span>
-                                </button>
-                              </li>
-                              -->
+
                             </ul>
                           </nav>
                           @endguest
@@ -195,70 +111,7 @@
           <div class="offscreen-navigation">
             <nav class="menu-main-primary-container">
               <ul class="menu">
-                <!--
-                <li class="list menu-item-parent menu-item-has-children">
-                  <a class="animation" href="home-main.html">HOME</a>
-                  <ul class="main-menu__dropdown sub-menu">
-                    <li><a href="/">Main Home</a>
-                    </li>
-                    <li><a href="index2.html">Design Conference</a>
-                    </li>
-                    <li><a href="index3.html">Web Seminar</a>
-                    </li>
-                    <li><a href="index4.html">Digital Event</a>
-                    </li>
-                  </ul>
-                </li>
-                <li class="list menu-item-parent menu-item-has-children">
-                  <a class="animation" href="home-main.html">PAGES</a>
-                  <ul class="main-menu__dropdown sub-menu">
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="pricing.html">Pricing</a></li>
-                    <li><a href="gallery.html">Gallery</a></li>
-                    <li><a href="venue.html">Venu</a></li>
-                    <li><a href="brand.html">Brand</a></li>
-                    <li><a href="faq.html">Faq</a></li>
-                    <li><a href="404.html">404 Error</a></li>
-                    <li><a href="contact.html">Contact Us</a></li>
-                  </ul>
-                </li>
-                <li class="list menu-item-parent menu-item-has-children">
-                  <a class="animation" href="home-main.html">SPEAKERS</a>
-                  <ul class="main-menu__dropdown sub-menu">
-                    <li><a href="speaker.html">Speaker</a></li>
-                    <li><a href="speaker-single.html">Speaker Single</a></li>
-                  </ul>
-                </li>
-                <li class="list menu-item-parent menu-item-has-children">
-                  <a class="animation" href="home-main.html">EVENTS</a>
-                  <ul class="main-menu__dropdown sub-menu">
-                    <li><a href="schedule1.html">Schedule 1</a></li>
-                    <li><a href="schedule2.html">Schedule 2</a></li>
-                    <li><a href="schedule3.html">Schedule 3</a></li>
-                    <li><a href="schedule4.html">Schedule 4</a></li>
-                    <li><a href="event-single.html">Event Single</a></li>
-                  </ul>
-                </li>
-                <li class="list menu-item-parent menu-item-has-children">
-                  <a class="animation" href="home-main.html">PORTFOLIO</a>
-                  <ul class="main-menu__dropdown sub-menu">
-                    <li><a href="portfolio-two-col-grid.html">Standard Two Column</a></li>
-                    <li><a href="portfolio-three-col-grid1.html">Standard Three Column</a>
-                    </li>
-                    <li><a href="portfolio-three-col-grid2.html">Three Column Grid</a></li>
-                    <li><a href="portfolio-four-col-grid.html">Four Column Grid</a></li>
-                    <li><a href="portfolio-four-col-full-wide.html">Four Column Full Wide</a></li>
-                  </ul>
-                </li>
-                <li class="list menu-item-parent menu-item-has-children">
-                  <a class="animation" href="home-main.html">BLOG</a>
-                  <ul class="main-menu__dropdown sub-menu">
-                    <li><a href="blog-grid.html">Blog Grid</a></li>
-                    <li><a href="blog-list.html">Blog List</a></li>
-                    <li><a href="blog-single.html">Blog Single</a></li>
-                  </ul>
-                </li>
-                -->
+
                 <li >
                   <a href="/">INICIO</a>
                 </li>
@@ -271,6 +124,26 @@
                 <li >
                   <a href="/contactanos">CREA TU EVENTO</a>
                 </li>
+                @if(Auth::user())
+                  <li class="menu-item menu-item-has-children">
+                    <a href="#">ADMIN</a>
+                    <ul class="sub-menu">
+                      @if(Auth::user()->esSuperAdmin())
+                        <li><a href="{{ route('admin.entidades.index') }}">Entidades</a></li>
+                        <li><a href="{{ route('admin.roles.index') }}">Roles de Entidad</a></li>
+                      @endif
+
+                      @if(Auth::user()->tieneRolEntidad('ADMIN') || Auth::user()->tieneRolEntidad('STAFF'))
+                        <li><a href="{{ route('admin.grupos.index') }}">Grupos</a></li>
+                        <li><a href="{{ route('admin.eventos.index') }}">Eventos</a></li>
+                      @endif
+                    </ul>
+                  </li>
+
+                  <li class="menu-item menu-item-has-children">
+                    <a href="{{ route('mis.asistencias') }}">Mis Asistencias</a>
+                  </li>
+                  @endif
               </ul>
             </nav>
           </div>
