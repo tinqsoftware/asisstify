@@ -242,8 +242,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 🕵️‍♂️ Detección en bucle (cada 2 segundos) - iniciar solo cuando el video esté reproduciéndose
   window.video.onplay = function () {
     setInterval(async () => {
-      const detecciones = await faceapi.detectAllFaces(window.video, new faceapi.TinyFaceDetectorOptions())
-        .withFaceLandmarks().withFaceDescriptors();
+    // Crear un snapshot del frame actual para evitar frames vacíos
+    const canvasFrame = faceapi.createCanvasFromMedia(window.video);
+    const detecciones = await faceapi.detectAllFaces(canvasFrame, new faceapi.TinyFaceDetectorOptions())
+      .withFaceLandmarks()
+      .withFaceDescriptors();
+    canvasFrame.remove(); // liberar memoria
 
       if (!detecciones.length) return;
 
