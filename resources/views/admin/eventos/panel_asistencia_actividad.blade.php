@@ -64,7 +64,8 @@
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-  const video = document.getElementById('cameraMirror');
+  // Hacer el video globalmente accesible
+  window.video = document.getElementById('cameraMirror');
   const mensaje = document.getElementById('mensajeBienvenida');
   const lista = document.getElementById('listaAsistentes');
   const contador = document.getElementById('contadorAsistentes');
@@ -193,19 +194,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Esperar selección de cámara y abrir stream
   const deviceId = await seleccionarCamara();
   if (!deviceId) return;
-  const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
-
+  let stream = null;
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
-    video.srcObject = stream;
-    console.log("📸 Cámara activa:", stream.getVideoTracks()[0].label);
+    stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
+    window.video.srcObject = stream;
   } catch (err) {
     console.error("🚫 Error al iniciar cámara:", err.name, err.message);
     alert("Error al iniciar la cámara: " + err.message);
+    return;
   }
-
-
-  video.srcObject = stream;
+  // Mostrar información de resolución y cámara después de cargar metadata
+  window.video.onloadedmetadata = function() {
+    const track = stream.getVideoTracks()[0];
+    console.log("📸 Cámara activa:", track.label, "Resolución:", window.video.videoWidth, "x", window.video.videoHeight);
+  };
 
   // 🔄 Mostrar asistentes ya registrados
   async function cargarAsistentes() {
@@ -218,10 +220,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   await cargarAsistentes();
 
-  // 🕵️‍♂️ Detección en bucle (cada 2 segundos)
-  video.addEventListener('play', async () => {
+  // 🕵️‍♂️ Detección en bucle (cada 2 segundos) - iniciar solo cuando el video esté reproduciéndose
+  window.video.onplay = function () {
     setInterval(async () => {
-      const detecciones = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+      const detecciones = await faceapi.detectAllFaces(window.video, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks().withFaceDescriptors();
 
       if (!detecciones.length) return;
@@ -269,7 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         break; // Solo procesamos el primer rostro por frame
       }
     }, 2000);
-  });
+  };
 });
 </script>
 @endsection
