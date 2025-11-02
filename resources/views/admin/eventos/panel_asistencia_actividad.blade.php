@@ -45,7 +45,7 @@
 
 {{-- ✅ Contenido interactivo --}}
 <div id="camara" class="movible" style="top: 100px; left: 100px;">
-  <video id="cameraMirror" autoplay playsinline></video>
+  <video id="cameraMirror" autoplay playsinline muted></video>
 </div>
 
 <div id="panelDatos" class="movible panel-blanco" style="top: 50px; right: 50px;">
@@ -196,13 +196,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!deviceId) return;
   let stream = null;
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
+    let constraints = {
       video: {
-        deviceId: { exact: deviceId },
         width: { ideal: 1280 },
         height: { ideal: 720 }
       }
-    });
+    };
+    if (deviceId && navigator.userAgent.indexOf("Safari") === -1) {
+      // Solo Chrome/Firefox aceptan deviceId exacto
+      constraints.video.deviceId = { exact: deviceId };
+    }
+
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      window.video.srcObject = stream;
+    } catch (err) {
+      console.error("🚫 Error al iniciar cámara:", err.name, err.message);
+      alert("Error al iniciar la cámara: " + err.message);
+      return;
+    }
     window.video.srcObject = stream;
   } catch (err) {
     console.error("🚫 Error al iniciar cámara:", err.name, err.message);
