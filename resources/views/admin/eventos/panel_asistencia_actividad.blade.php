@@ -196,7 +196,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!deviceId) return;
   let stream = null;
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        deviceId: { exact: deviceId },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }
+    });
     window.video.srcObject = stream;
   } catch (err) {
     console.error("🚫 Error al iniciar cámara:", err.name, err.message);
@@ -208,6 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const track = stream.getVideoTracks()[0];
     console.log("📸 Cámara activa:", track.label, "Resolución:", window.video.videoWidth, "x", window.video.videoHeight);
   };
+  console.log("Resolución real:", window.video.videoWidth, "x", window.video.videoHeight);
 
   // 🔄 Mostrar asistentes ya registrados
   async function cargarAsistentes() {
