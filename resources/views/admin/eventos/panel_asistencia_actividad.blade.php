@@ -114,8 +114,86 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // 📸 Iniciar cámara
-  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  // 📸 Selección de cámara (popup si hay 2+)
+  let selectedDeviceId = null;
+  async function seleccionarCamara() {
+    // Listar dispositivos
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cameras = devices.filter(d => d.kind === 'videoinput');
+    if (cameras.length === 0) {
+      alert('No se detectaron cámaras.');
+      return null;
+    }
+    if (cameras.length === 1) {
+      // Solo una cámara, usar directamente
+      selectedDeviceId = cameras[0].deviceId;
+      return selectedDeviceId;
+    }
+    // 2 o más cámaras: mostrar popup
+    return new Promise((resolve) => {
+      // Modal básico
+      let modal = document.createElement('div');
+      modal.id = 'modalSeleccionCamara';
+      modal.style.position = 'fixed';
+      modal.style.top = 0;
+      modal.style.left = 0;
+      modal.style.width = '100vw';
+      modal.style.height = '100vh';
+      modal.style.background = 'rgba(0,0,0,0.5)';
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.style.zIndex = 2000;
+      // Modal content
+      let content = document.createElement('div');
+      content.style.background = '#fff';
+      content.style.padding = '2rem 2.5rem';
+      content.style.borderRadius = '12px';
+      content.style.boxShadow = '0 4px 16px rgba(0,0,0,0.18)';
+      content.style.textAlign = 'center';
+      let titulo = document.createElement('h4');
+      titulo.innerText = 'Selecciona una cámara';
+      let select = document.createElement('select');
+      select.style.margin = '1rem 0';
+      select.style.fontSize = '1.1rem';
+      select.style.padding = '0.4rem 1rem';
+      select.style.borderRadius = '7px';
+      // Opciones
+      cameras.forEach((cam, i) => {
+        let opt = document.createElement('option');
+        opt.value = cam.deviceId;
+        opt.innerText = cam.label || `Cámara ${i+1}`;
+        select.appendChild(opt);
+      });
+      let btn = document.createElement('button');
+      btn.innerText = 'Usar cámara';
+      btn.style.marginTop = '1.2rem';
+      btn.style.padding = '0.5rem 1.5rem';
+      btn.style.background = '#d92332';
+      btn.style.color = '#fff';
+      btn.style.border = 'none';
+      btn.style.borderRadius = '8px';
+      btn.style.fontWeight = '600';
+      btn.style.fontSize = '1rem';
+      btn.style.cursor = 'pointer';
+      btn.onclick = function() {
+        selectedDeviceId = select.value;
+        document.body.removeChild(modal);
+        resolve(selectedDeviceId);
+      };
+      content.appendChild(titulo);
+      content.appendChild(select);
+      content.appendChild(document.createElement('br'));
+      content.appendChild(btn);
+      modal.appendChild(content);
+      document.body.appendChild(modal);
+    });
+  }
+
+  // Esperar selección de cámara y abrir stream
+  const deviceId = await seleccionarCamara();
+  if (!deviceId) return;
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
   video.srcObject = stream;
 
   // 🔄 Mostrar asistentes ya registrados
