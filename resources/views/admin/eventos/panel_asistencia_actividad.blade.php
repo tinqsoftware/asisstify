@@ -194,6 +194,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const deviceId = await seleccionarCamara();
   if (!deviceId) return;
   const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
+    video.srcObject = stream;
+    console.log("📸 Cámara activa:", stream.getVideoTracks()[0].label);
+  } catch (err) {
+    console.error("🚫 Error al iniciar cámara:", err.name, err.message);
+    alert("Error al iniciar la cámara: " + err.message);
+  }
+
+
   video.srcObject = stream;
 
   // 🔄 Mostrar asistentes ya registrados
