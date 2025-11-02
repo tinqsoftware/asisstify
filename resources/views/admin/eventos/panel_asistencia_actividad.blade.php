@@ -210,9 +210,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
   // Mostrar información de resolución y cámara después de cargar metadata
-  window.video.onloadedmetadata = function() {
+  window.video.onloadedmetadata = async function() {
     const track = stream.getVideoTracks()[0];
-    console.log("📸 Cámara activa:", track.label, "Resolución:", window.video.videoWidth, "x", window.video.videoHeight);
+    console.log("📸 Cámara activa:", track.label);
+
+    // Esperar a que el video realmente tenga frames renderizados
+    await new Promise(resolve => {
+      const checkReady = setInterval(() => {
+        if (window.video.videoWidth > 0 && window.video.videoHeight > 0) {
+          clearInterval(checkReady);
+          resolve();
+        }
+      }, 100);
+    });
+
+    console.log("✅ Resolución real confirmada:", window.video.videoWidth, "x", window.video.videoHeight);
   };
   console.log("Resolución real:", window.video.videoWidth, "x", window.video.videoHeight);
 
