@@ -324,21 +324,29 @@
     box-shadow: 0 0 0 1px rgba(251,191,36,.5);
   }
 
+  /* OPCIONES — tamaño aumentado +15% */
   .opcion-img {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    object-fit: cover;
-    background: #1f2937;
-    flex-shrink: 0;
+      width: 44px;   /* antes 38 */
+      height: 44px;  /* antes 38 */
+      border-radius: 14px;
+      object-fit: cover;
+      background: #1f2937;
+      flex-shrink: 0;
   }
+
   .opcion-name {
-    font-size: .95rem;
-    font-weight: 600;
+      font-size: 1.10rem; /* antes .95rem */
+      font-weight: 600;
   }
+
   .opcion-sub {
-    font-size: .75rem;
-    opacity: .8;
+      font-size: .82rem; /* antes .75rem */
+      opacity: .8;
+  }
+
+  /* Botón un poquito más alto */
+  .opcion-btn {
+      padding: 11px 12px; /* antes 9px 10px */
   }
 
   .btn-confirmar {

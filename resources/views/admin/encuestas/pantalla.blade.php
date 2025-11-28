@@ -170,15 +170,37 @@
     margin-bottom: .45rem;
   }
 
+  /* OPCIONES PANTALLA — aumento del tamaño en ~35% */
   .opcion-img {
-    width: 150px;
-    height: 150px;
-    border-radius: 24px;
-    object-fit: cover;
-    margin-bottom: .75rem;
-    background: #020617;
-    border: 1px solid rgba(55,65,81,.8);
+      width: 200px; /* antes 150 */
+      height: 200px; /* antes 150 */
+      border-radius: 28px;
+      object-fit: cover;
+      margin-bottom: 1rem; /* un poco más de aire */
+      background: #020617;
+      border: 1px solid rgba(55,65,81,.8);
   }
+
+  .opcion-nombre {
+      font-size: 1.55rem; /* antes 1.15rem */
+      font-weight: 700;
+      margin-bottom: .6rem;
+  }
+
+  .opcion-votos {
+      font-size: 1.15rem; /* antes .95rem */
+      opacity: .95;
+  }
+
+  .opcion-card {
+      padding: 24px 26px 28px; /* antes 18px 22px 20px */
+      min-width: 230px;        /* antes 190 */
+      max-width: 300px;        /* antes 240 */
+  }
+
+  .opcion-bar-wrapper {
+    height: 22px; /* antes 16px */
+  } 
 
   .opcion-bar-wrapper {
     width: 100%;
