@@ -79,6 +79,12 @@
           <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">{{ $evento->titulo }}</h5>
             <small>{{ \Carbon\Carbon::parse($evento->fecha_inicio)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($evento->fecha_fin)->format('d/m/Y') }}</small>
+            <a href="{{ route('mis.asistencias.evento', $evento->id) }}"
+              class="btn btn-sm btn-light mt-1">
+              {{-- Icono Bootstrap Icons (si los usas) --}}
+              <i class="bi bi-eye"></i>
+              Ver detalle del evento
+            </a>
           </div>
           <div class="card-body">
             @foreach($evento->dias as $dia)

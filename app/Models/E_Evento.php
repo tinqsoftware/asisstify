@@ -26,4 +26,9 @@ class E_Evento extends Model
     {
         return $this->hasMany(E_ReglaCertificado::class, 'evento_id');
     }
+
+    public function encuestas()
+    {
+        return $this->hasMany(E_Encuesta::class, 'evento_id');
+    }
 }

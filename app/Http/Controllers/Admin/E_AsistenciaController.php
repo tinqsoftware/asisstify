@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\E_Encuesta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\E_Evento;
@@ -43,4 +44,29 @@ class E_AsistenciaController extends Controller
         $actividad = \App\Models\E_Actividad::with('dia')->findOrFail($actividadId);
         return view('admin.eventos.panel_asistencia_actividad', compact('evento', 'actividad'));
     }
+
+    public function detalleEvento(E_Evento $evento)
+    {
+        $user = Auth::user();
+
+        // Cargamos encuestas + opciones, y opcionalmente qué votó el usuario
+        $encuestas = $evento->encuestas()
+            ->with('opciones')
+            ->get()
+            ->map(function (E_Encuesta $encuesta) use ($user) {
+                $votosUsuario = null;
+                if ($user) {
+                    $votosUsuario = $encuesta->votos()
+                        ->where('ronda', $encuesta->ronda_actual)
+                        ->where('usuario_id', $user->id)
+                        ->pluck('opcion_id')
+                        ->toArray();
+                }
+                $encuesta->setAttribute('votos_usuario', $votosUsuario);
+                return $encuesta;
+            });
+
+        return view('mis_asistencias.detalle_evento', compact('evento', 'encuestas', 'user'));
+    }
+
 }

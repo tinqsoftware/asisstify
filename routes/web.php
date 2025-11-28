@@ -10,7 +10,10 @@ use App\Http\Controllers\Admin\E_EventoController;
 use App\Http\Controllers\Admin\E_RolEntidadController;
 use App\Http\Controllers\Admin\PerfilController;
 use App\Http\Controllers\Admin\E_AsistenciaController;
+use App\Http\Controllers\Admin\E_EncuestaController;
 use App\Http\Controllers\Api\RostroController;
+use App\Http\Controllers\Api\EncuestaController as ApiEncuestaController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -137,6 +140,23 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     });
 
 
+    // ============================================
+    // ENCUESTAS POR EVENTO (ADMIN)
+    // ============================================
+    Route::get('/eventos/{evento}/encuestas', [E_EncuestaController::class, 'index'])->name('admin.eventos.encuestas.index');
+    Route::get('/eventos/{evento}/encuestas/crear', [E_EncuestaController::class, 'create'])->name('admin.eventos.encuestas.create');
+    Route::post('/eventos/{evento}/encuestas', [E_EncuestaController::class, 'store'])->name('admin.eventos.encuestas.store');
+    Route::get('/eventos/{evento}/encuestas/{encuesta}/editar', [E_EncuestaController::class, 'edit'])->name('admin.eventos.encuestas.edit');
+    Route::put('/eventos/{evento}/encuestas/{encuesta}', [E_EncuestaController::class, 'update'])->name('admin.eventos.encuestas.update');
+
+    // Activar / cerrar / abrir nueva ronda
+    Route::post('/eventos/{evento}/encuestas/{encuesta}/activar', [E_EncuestaController::class, 'activar'])->name('admin.eventos.encuestas.activar');
+    Route::post('/eventos/{evento}/encuestas/{encuesta}/cerrar', [E_EncuestaController::class, 'cerrar'])->name('admin.eventos.encuestas.cerrar');
+    Route::post('/eventos/{evento}/encuestas/{encuesta}/nueva-ronda', [E_EncuestaController::class, 'nuevaRonda'])->name('admin.eventos.encuestas.nuevaRonda');
+
+    // Pantalla grande ("ecram") para visualizar resultados en vivo
+    Route::get('/eventos/{evento}/encuestas/{encuesta}/pantalla', [E_EncuestaController::class, 'pantalla'])->name('admin.eventos.encuestas.pantalla');
+
 
 
 });
@@ -146,8 +166,17 @@ Route::post('/marcar-asistencia', [RostroController::class, 'marcar'])->name('ap
 Route::get('/asistencias/{actividad}', [RostroController::class, 'listarAsistencias'])->name('api.asistencias');
 
 // ============================================
-Route::middleware(['auth'])->get('/mis-asistencias', [E_AsistenciaController::class, 'misAsistencias'])
-    ->name('mis.asistencias');
+// API ENCUESTAS (VOTO + ESTADO)
+// ============================================
+// Listar encuestas de un evento (para "Mis asistencias" o QR público)
+Route::get('/api/eventos/{evento}/encuestas', [ApiEncuestaController::class, 'porEvento'])->name('api.encuestas.evento');
+
+// Votar en una encuesta (auth opcional según config de encuesta)
+Route::post('/api/encuestas/{encuesta}/votar', [ApiEncuestaController::class, 'votar'])->name('api.encuestas.votar');
+
+// Estado/resultados de una encuesta (para ecram y para celulares)
+Route::get('/api/encuestas/{encuesta}/estado', [ApiEncuestaController::class, 'estado'])->name('api.encuestas.estado');
+
 
 Route::get('/eventos/{id}/publico', [E_EventoController::class, 'show'])->name('eventos.publico');
 Route::get('/eventos/{id}/confirmar', [E_EventoController::class, 'confirmarVista'])->name('eventos.confirmarVista');
@@ -157,7 +186,8 @@ Route::get('/eventos/{id}/confirmar', [E_EventoController::class, 'confirmarVist
 // ============================================
 // MIS ASISTENCIAS
 // ============================================
-Route::middleware(['auth'])->get('/mis-asistencias', [E_AsistenciaController::class, 'misAsistencias'])
-    ->name('mis.asistencias');
+Route::middleware(['auth'])->get('/mis-asistencias', [E_AsistenciaController::class, 'misAsistencias'])->name('mis.asistencias');
+
+Route::middleware(['auth'])->get('/mis-asistencias/evento/{evento}', [E_AsistenciaController::class, 'detalleEvento'])->name('mis.asistencias.evento');
 
 Route::get('/evento/{url_evento}', [Eventos::class, 'detalle']);

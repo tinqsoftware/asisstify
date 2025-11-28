@@ -113,4 +113,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(E_RostroUsuario::class, 'usuario_id');
     }
+
+    public function votosEncuestas()
+    {
+        return $this->hasMany(E_EncuestaVoto::class, 'usuario_id');
+    }
 }

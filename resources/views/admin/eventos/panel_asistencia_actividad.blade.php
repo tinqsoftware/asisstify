@@ -61,6 +61,7 @@
   <h4 id="mensajeBienvenida" class="text-success"></h4>
 </div>
 
+
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
@@ -71,6 +72,51 @@ document.addEventListener('DOMContentLoaded', async () => {
   const contador = document.getElementById('contadorAsistentes');
   let detectados = new Set();
   let asistenciasActuales = [];
+  const actividadNombre = @json($actividad->titulo);
+
+  const MATCH_THRESHOLD = 0.62;           // umbral de aceptación
+  const PERSON_COOLDOWN_MS = 10000;       // 10s por persona para no repetir
+  const lastSeenAt = new Map();           // nombre -> timestamp
+
+  // Utilidades para frases
+  function joinNames(names) {
+    if (names.length === 1) return names[0];
+    return names.slice(0, -1).join(', ') + ' y ' + names[names.length - 1];
+  }
+  function genderWordFor(sexo) {
+    return (sexo && sexo.toUpperCase() === 'F') ? 'Bienvenida' : 'Bienvenido';
+  }
+
+  function pickEndingSingular(sexo) {
+    const endsM = ['¡Qué gusto verte!', '¡Nos alegra tenerte aquí!'];
+    const endsF = ['¡Qué gusto verte!', '¡Nos alegra tenerte aquí!'];
+    const arr = (sexo && sexo.toUpperCase() === 'F') ? endsF : endsM;
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+  function pickEndingPlural(allF, allM) {
+    const endsNeutral = ['¡Qué gusto verlos!', '¡Nos alegra que estén aquí!'];
+    const endsF = ['¡Qué gusto verlas!', '¡Nos alegra que estén aquí!'];
+    const endsM = ['¡Qué gusto verlos!', '¡Nos alegra que estén aquí!'];
+    const arr = allF ? endsF : allM ? endsM : endsNeutral;
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+  function pluralWordFor(sexos) {
+    const allF = sexos.length && sexos.every(s => (s || 'M').toUpperCase() === 'F');
+    const allM = sexos.length && sexos.every(s => (s || 'M').toUpperCase() === 'M');
+    return { word: allF ? 'Bienvenidas' : 'Bienvenidos', allF, allM };
+  }
+  function buildGreetingSingle(nombre, sexo, actividadNombre) {
+    const saludoBase = genderWordFor(sexo);
+    // Ej.: "Buenos días, Bienvenida Ana a Encuentro AWAKE. ¡Qué gusto verte!"
+    return ` ${saludoBase} ${nombre} a ${actividadNombre}.`;
+  }
+  function buildGreetingGroup(nuevos, actividadNombre) {
+    const nombres = nuevos.map(n => n.nombre);
+    const sexos = nuevos.map(n => n.sexo);
+    const { word, allF, allM } = pluralWordFor(sexos);
+    // Ej.: "Buenas tardes, Bienvenidas Ana y Sofía a Encuentro AWAKE. ¡Qué gusto verlas!"
+    return ` ${word} ${joinNames(nombres)} a ${actividadNombre}. ${pickEndingPlural(allF, allM)}`;
+  }
 
   // 🧲 Hacer movibles los paneles
   document.querySelectorAll('.movible').forEach(el => {
@@ -91,6 +137,137 @@ document.addEventListener('DOMContentLoaded', async () => {
     el.ondragstart = () => false;
   });
 
+  // 🔊 Text-to-Speech (anuncio de bienvenida) con estilos y persistencia
+  const tts = {
+    ready: false,
+    voice: null,
+    style: localStorage.getItem('assistify_voice_style') || 'natural',
+    profile: { rate: 0.92, pitch: 1.08, volume: 0.98, gapMs: 140 },
+
+    styles: {
+      natural: {
+        preferVoices: [/Google Español/i, /Paulina/i, /Monica/i, /Mónica/i, /Luciana/i, /Camila/i],
+        profile: { rate: 0.92, pitch: 1.08, volume: 0.98, gapMs: 140 }
+      },
+      dota: {
+        // estilo narrador eSports: un poco más grave, algo más rápido y con más proyección
+        preferVoices: [/Jorge/i, /Enrique/i, /Diego/i, /Google Español/i, /Alvaro/i],
+        profile: { rate: 1.03, pitch: 0.92, volume: 1.0, gapMs: 110 }
+      },
+      serena: {
+        preferVoices: [/Monica/i, /Mónica/i, /Luciana/i, /Google Español/i],
+        profile: { rate: 0.88, pitch: 1.0, volume: 0.95, gapMs: 160 }
+      },
+      energica: {
+        preferVoices: [/Camila/i, /Google Español/i, /Jorge/i],
+        profile: { rate: 1.08, pitch: 1.12, volume: 1.0, gapMs: 120 }
+      }
+    },
+
+    _pickVoice() {
+      const preferOrder = (this.styles[this.style]?.preferVoices) || [];
+      const voices = window.speechSynthesis.getVoices() || [];
+      let chosen = null;
+
+      for (const pref of preferOrder) {
+        const v = voices.find(v => pref.test(v.name));
+        if (v) { chosen = v; break; }
+      }
+      if (!chosen) {
+        chosen = voices.find(v => (v.lang || '').toLowerCase().startsWith('es')) || voices[0] || null;
+      }
+
+      // perfilar según estilo
+      this.profile = (this.styles[this.style]?.profile) || this.profile;
+      return chosen;
+    },
+
+    setStyle(styleName) {
+      if (!this.styles[styleName]) return;
+      this.style = styleName;
+      localStorage.setItem('assistify_voice_style', this.style);
+      this.voice = this._pickVoice();
+      this.ready = !!this.voice;
+      console.log('🔊 Estilo de voz:', this.style, '→ voz:', this.voice ? this.voice.name : '(por defecto)');
+    },
+
+    init() {
+      const pick = () => {
+        this.voice = this._pickVoice();
+        this.ready = !!this.voice;
+      };
+      pick();
+      if (!this.ready) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          pick();
+        };
+      }
+
+      // Desbloqueo por primer gesto del usuario (iOS/Safari/Chrome políticas de audio)
+      const unlock = () => {
+        try {
+          const u = new SpeechSynthesisUtterance(' ');
+          if (this.voice) u.voice = this.voice;
+          u.volume = 0;
+          window.speechSynthesis.speak(u);
+        } catch {}
+        document.removeEventListener('click', unlock, { passive: true });
+        document.removeEventListener('touchstart', unlock, { passive: true });
+      };
+      document.addEventListener('click', unlock, { passive: true });
+      document.addEventListener('touchstart', unlock, { passive: true });
+
+      // Aplicar estilo guardado al iniciar
+      this.setStyle(this.style);
+    },
+
+    // Divide en frases y aplica pequeñas variaciones para que suene más natural
+    speak(text) {
+      if (!text) return;
+      try {
+        window.speechSynthesis.cancel();
+
+        const chunks = String(text)
+          .replace(/\s+/g, ' ')
+          .split(/([.!?…]+)\s*/g)
+          .reduce((acc, part, i, arr) => {
+            if (!part) return acc;
+            if (/[.!?…]+/.test(part) && acc.length) {
+              acc[acc.length - 1] += part;
+            } else if (!/[.!?…]+/.test(arr[i + 1] || '')) {
+              acc.push(part);
+            } else {
+              acc.push(part);
+            }
+            return acc;
+          }, [])
+          .map(s => s.trim())
+          .filter(Boolean);
+
+        let delay = 0;
+        const { rate, pitch, volume, gapMs } = this.profile;
+
+        chunks.forEach((phrase) => {
+          const u = new SpeechSynthesisUtterance(phrase);
+          if (this.voice) u.voice = this.voice;
+          u.lang   = (this.voice && this.voice.lang) || 'es-ES';
+          // Micro-variaciones según estilo
+          const delta = (this.style === 'dota') ? 0.04 : 0.06;
+          u.rate   = Math.max(0.75, Math.min(1.25, rate + (Math.random() * delta - delta/2)));
+          u.pitch  = Math.max(0.6,  Math.min(1.35, pitch + (Math.random() * delta - delta/2)));
+          u.volume = volume;
+
+          setTimeout(() => window.speechSynthesis.speak(u), delay);
+          delay += gapMs + Math.min(280, Math.max(80, phrase.length * 2));
+        });
+      } catch (e) {
+        console.warn('TTS error:', e);
+      }
+    }
+  };
+  tts.init();
+
+
   // 🧠 Cargar modelos FaceAPI
   await Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
@@ -102,16 +279,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 🚀 Cargar rostros
   const response = await fetch('{{ route("api.rostros", $evento->id) }}');
   const rostros = await response.json();
-  // Convertimos a una lista de {nombre, embeddings}
+  // Convertimos a una lista de {nombre, sexo, embeddings}
   const usuariosEmbeddings = rostros.map(usuario => ({
     nombre: usuario.nombre,
-    embeddings: usuario.embeddings.map(e => new Float32Array(e))
+    sexo: usuario.sexo || usuario.genero || null, // soporta campos alternos si existen
+    embeddings: (usuario.embeddings || []).map(e => new Float32Array(e))
   }));
-  // Creamos una lista plana de {nombre, embedding}
+
+  // Mapa nombre -> sexo
+  const mapNombreSexo = new Map();
+  usuariosEmbeddings.forEach(u => mapNombreSexo.set(u.nombre, u.sexo));
+
+  // Lista plana para buscar mejor match
   let embeddingsPlana = [];
   usuariosEmbeddings.forEach(u => {
     u.embeddings.forEach(em => {
-      embeddingsPlana.push({nombre: u.nombre, embedding: em});
+      embeddingsPlana.push({ nombre: u.nombre, sexo: u.sexo, embedding: em });
     });
   });
 
@@ -254,41 +437,47 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 🕵️‍♂️ Detección en bucle (cada 2 segundos) - iniciar solo cuando el video esté reproduciéndose
   window.video.onplay = function () {
     setInterval(async () => {
-    // Crear un snapshot del frame actual para evitar frames vacíos
-    const canvasFrame = faceapi.createCanvasFromMedia(window.video);
-    const detecciones = await faceapi.detectAllFaces(canvasFrame, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks()
-      .withFaceDescriptors();
-    canvasFrame.remove(); // liberar memoria
+      // Detección directa sobre el elemento de video
+      const detecciones = await faceapi
+        .detectAllFaces(window.video, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceDescriptors();
 
       if (!detecciones.length) return;
 
-      // Solo tomamos el primer rostro detectado (puedes recorrer todos si quieres)
+      const nuevos = []; // nombres recién validados en este frame
+
       for (const d of detecciones) {
-        // Calcula la distancia euclidiana manualmente para todos los embeddings
+        // calcula distancias contra todos los embeddings
         let resultados = embeddingsPlana.map(obj => {
           let dist = 0;
           for (let i = 0; i < obj.embedding.length; i++) {
-            let diff = d.descriptor[i] - obj.embedding[i];
+            const diff = d.descriptor[i] - obj.embedding[i];
             dist += diff * diff;
           }
-          return {nombre: obj.nombre, distancia: Math.sqrt(dist)};
+          return { nombre: obj.nombre, sexo: obj.sexo, distancia: Math.sqrt(dist) };
         });
-        // Ordena por menor distancia
         resultados.sort((a, b) => a.distancia - b.distancia);
-        // Top 3
-        let top3 = resultados.slice(0, 3);
-        // Mostrar en consola
-        console.log('Top 3:', top3);
+        const best = resultados[0];
 
-        // Si la mejor es suficientemente cercana y no detectado aún
-        if (top3[0].distancia < 0.45 && !detectados.has(top3[0].nombre)) {
-          detectados.add(top3[0].nombre);
-          mensaje.textContent = `Bienvenido ${top3[0].nombre}`;
-          lista.innerHTML += `<li>${top3[0].nombre}</li>`;
+        console.log('Best match:', best.nombre, 'dist:', best.distancia.toFixed(3), 'threshold:', MATCH_THRESHOLD);
+
+        // umbral + cooldown por persona
+        const now = Date.now();
+        const last = lastSeenAt.get(best.nombre) || 0;
+        const cooled = (now - last) > PERSON_COOLDOWN_MS;
+
+        if (best.distancia < MATCH_THRESHOLD && cooled && !detectados.has(best.nombre)) {
+          detectados.add(best.nombre);
+          lastSeenAt.set(best.nombre, now);
+          nuevos.push({ nombre: best.nombre, sexo: mapNombreSexo.get(best.nombre) || best.sexo || 'M' });
+
+          // UI: lista y contador
+          lista.innerHTML += `<li>${best.nombre}</li>`;
           contador.textContent = detectados.size;
 
-          await fetch('{{ route("api.marcarAsistencia") }}', {
+          // Registro en backend (sin bloquear el bucle)
+          fetch('{{ route("api.marcarAsistencia") }}', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -296,14 +485,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             body: JSON.stringify({
               actividad_id: {{ $actividad->id }},
-              nombre: top3[0].nombre
+              nombre: best.nombre
             })
-          }).then(r => r.json())
-            .then(d => console.log('🧾 Asistencia:', d))
-            .catch(err => console.error('❌ Error al registrar:', err));
+          })
+          .then(r => r.json())
+          .then(d => console.log('🧾 Asistencia:', d))
+          .catch(err => console.error('❌ Error al registrar:', err));
         }
-        // Puedes mostrar el top3 visualmente si lo deseas
-        break; // Solo procesamos el primer rostro por frame
+      }
+
+      // Anuncio por voz:
+      if (nuevos.length === 1) {
+        const p = nuevos[0];
+        const saludo = buildGreetingSingle(p.nombre, p.sexo, actividadNombre);
+        mensaje.textContent = saludo;
+        tts.speak(saludo);
+      } else if (nuevos.length > 1) {
+        const saludo = buildGreetingGroup(nuevos, actividadNombre);
+        mensaje.textContent = saludo;
+        tts.speak(saludo);
       }
     }, 2000);
   };
