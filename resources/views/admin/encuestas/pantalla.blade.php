@@ -615,6 +615,7 @@
   let rankingVisible = false;
   let shuffleOrderIds = null;
   let lastShuffleAt = 0;
+  let winnerRevealPlayed = false;
 
   function calcularLayout(total) {
     if (total <= 0) return { rows: 0, cols: 0 };
@@ -868,7 +869,8 @@
     if (winnerOnly && idGanador) {
       const ganadorCard = grid.querySelector('[data-opcion-id="' + idGanador + '"]');
       if (ganadorCard) {
-        if (prevEstado !== 'cerrada') {
+        ganadorCard.classList.add('winner-spotlight');
+        if (!winnerRevealPlayed) {
           if (pollingId) {
             clearInterval(pollingId);
           }
@@ -877,12 +879,11 @@
           ganadorCard.addEventListener('animationend', () => {
             ganadorCard.classList.remove('winner-reveal');
             ganadorCard.classList.add('winner-float');
-            ganadorCard.classList.add('winner-spotlight');
             animacionGanadorHecha = true;
           }, { once: true });
+          winnerRevealPlayed = true;
         } else {
           ganadorCard.classList.add('winner-float');
-          ganadorCard.classList.add('winner-spotlight');
         }
       }
     }
