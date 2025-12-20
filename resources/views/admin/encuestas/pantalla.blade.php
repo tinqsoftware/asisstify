@@ -124,10 +124,8 @@
   .opciones-grid {
     --cols: 4;
     --gap: 12px;
-    --card-min: 180px;
-    --card-max: 220px;
     display: grid;
-    grid-template-columns: repeat(var(--cols), minmax(var(--card-min), var(--card-max)));
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
     gap: var(--gap);
     justify-content: center;
     align-content: start;
@@ -137,26 +135,18 @@
   }
 
   .opciones-grid[data-size="xl"] {
-    --card-min: 220px;
-    --card-max: 260px;
     --gap: 16px;
   }
 
   .opciones-grid[data-size="lg"] {
-    --card-min: 200px;
-    --card-max: 240px;
     --gap: 14px;
   }
 
   .opciones-grid[data-size="md"] {
-    --card-min: 170px;
-    --card-max: 200px;
     --gap: 12px;
   }
 
   .opciones-grid[data-size="sm"] {
-    --card-min: 150px;
-    --card-max: 180px;
     --gap: 10px;
   }
 
@@ -165,7 +155,7 @@
     border-radius: 28px;
     padding: 12px 14px 16px;
     text-align: center;
-    width: clamp(var(--card-min), 95%, var(--card-max));
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -470,32 +460,13 @@
   function calcularLayout(total) {
     if (total <= 0) return { rows: 0, cols: 0 };
     if (total <= 6) return { rows: 1, cols: total, size: 'xl' };
+    if (total <= 12) return { rows: 2, cols: 6, size: 'lg' };
+    if (total <= 14) return { rows: 2, cols: 7, size: 'lg' };
+    if (total <= 21) return { rows: 3, cols: 7, size: 'md' };
 
-    const ancho = grid.clientWidth || window.innerWidth || 1280;
-    const gap = 12;
-    const minCard = 190;
-    const maxColsByWidth = Math.max(3, Math.min(12, Math.floor((ancho + gap) / (minCard + gap))));
-
-    if (total <= 20) {
-      const cols = Math.min(10, Math.max(3, Math.ceil(total / 2), Math.min(maxColsByWidth, 6)));
-      return { rows: 2, cols, size: 'lg' };
-    }
-
-    let cols = Math.min(10, Math.max(4, Math.ceil(total / 3)));
-    cols = Math.min(cols, maxColsByWidth);
-    let rows = Math.ceil(total / cols);
-    rows = Math.min(3, Math.max(2, rows));
-
-    if (rows * cols < total) {
-      cols = Math.min(10, Math.ceil(total / rows));
-      cols = Math.min(cols, maxColsByWidth);
-      rows = Math.ceil(total / cols);
-      rows = Math.min(3, Math.max(2, rows));
-    }
-
-    const size = rows === 2 ? 'lg' : 'md';
-
-    return { rows, cols, size };
+    const cols = Math.max(7, Math.ceil(total / 3));
+    const rows = Math.ceil(total / cols);
+    return { rows, cols, size: 'sm' };
   }
 
   function lanzarConfetti() {

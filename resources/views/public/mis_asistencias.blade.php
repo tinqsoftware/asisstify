@@ -288,6 +288,9 @@
                     {{ \Carbon\Carbon::parse($evento->fecha_inicio)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($evento->fecha_fin)->format('d/m/Y') }}
                   </div>
                 </div>
+                <a href="{{ route('mis.asistencias.evento', $evento->id) }}" class="btn-detalle">
+                  Ver detalle
+                </a>
               </div>
               @foreach($evento->dias as $dia)
                 @php

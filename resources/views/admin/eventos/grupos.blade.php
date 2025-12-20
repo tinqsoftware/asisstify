@@ -50,6 +50,24 @@
     max-height: 260px;
     overflow: auto;
   }
+  .grupo-search {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .grupo-search .form-control,
+  .grupo-search .form-select {
+    flex: 1 1 220px;
+  }
+  .grupo-miembros-table th,
+  .grupo-miembros-table td {
+    white-space: nowrap;
+  }
+  .grupo-empty {
+    color: #9ca3af;
+    font-size: .85rem;
+  }
   @media (max-width: 768px) {
     .grupo-shell {
       padding: 16px;
@@ -85,42 +103,129 @@
     </form>
   </div>
 
-  @forelse($grupos as $grupo)
-    <div class="grupo-card">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <div>
-          <strong>{{ $grupo->nombre }}</strong>
-          <small class="text-muted d-block">{{ $grupo->descripcion ?: 'Sin descripción' }}</small>
+  <div class="accordion" id="eventoGruposAccordion">
+    @forelse($grupos as $grupo)
+      @php
+        $grupoId = 'eventoGrupo' . $grupo->id;
+        $miembrosGrupo = $grupo->usuarios;
+      @endphp
+      <div class="grupo-card accordion-item bg-transparent border-0">
+        <div class="accordion-header d-flex justify-content-between align-items-center" id="heading{{ $grupoId }}">
+          <button class="accordion-button collapsed bg-transparent text-light border rounded" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $grupoId }}" aria-expanded="false">
+            <strong>{{ $grupo->nombre }}</strong>
+            <span class="ms-3 grupo-badge-count">Miembros: {{ $miembrosGrupo->count() }}</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-warning ms-2" data-bs-toggle="modal" data-bs-target="#modalMiembros{{ $grupo->id }}">
+            Agregar miembros
+          </button>
         </div>
-        <span class="grupo-badge-count">Miembros: {{ $grupo->usuarios->count() }}</span>
+        <div id="collapse{{ $grupoId }}" class="accordion-collapse collapse" data-bs-parent="#eventoGruposAccordion">
+          <div class="accordion-body pt-3">
+            @if($miembrosGrupo->isEmpty())
+              <div class="grupo-empty">Este grupo aún no tiene miembros.</div>
+            @else
+              <div class="table-responsive">
+                <table class="table table-bordered table-striped w-100 grupo-miembros-table">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Miembro</th>
+                      <th>Documento</th>
+                      <th>Grupo entidad</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @foreach($miembrosGrupo as $miembro)
+                      <tr>
+                        <td>{{ trim(($miembro->name ?? '') . ' ' . ($miembro->apellidos ?? '')) }}</td>
+                        <td>{{ $miembro->nro_documento ?? '—' }}</td>
+                        <td>{{ $grupoEntidadPorUsuario[$miembro->id] ?? '—' }}</td>
+                      </tr>
+                    @endforeach
+                  </tbody>
+                </table>
+              </div>
+            @endif
+          </div>
+        </div>
       </div>
 
-      <form method="POST" action="{{ route('admin.eventos.grupos.miembros.update', [$evento->id, $grupo->id]) }}">
-        @csrf
-        <div class="grupo-list">
-          @foreach($confirmados as $usuario)
-            <div class="form-check d-flex align-items-center gap-2 mb-2">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                name="user_ids[]"
-                value="{{ $usuario->id }}"
-                {{ $grupo->usuarios->contains($usuario->id) ? 'checked' : '' }}
-              >
-              <label class="form-check-label">
-                {{ $usuario->name }} {{ $usuario->apellidos }}
-                <small class="text-muted">({{ $usuario->email ?? $usuario->nro_documento ?? '—' }})</small>
-              </label>
-            </div>
-          @endforeach
+      <div class="modal fade modal-evento-grupo" id="modalMiembros{{ $grupo->id }}" tabindex="-1" aria-hidden="true" data-grupo="{{ $grupo->id }}">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <form method="POST" action="{{ route('admin.eventos.grupos.miembros.update', [$evento->id, $grupo->id]) }}">
+              @csrf
+              <div class="modal-header">
+                <h5 class="modal-title">Agregar miembros - {{ $grupo->nombre }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              </div>
+              <div class="modal-body">
+                <div class="grupo-search">
+                  <input type="text" class="form-control" placeholder="Buscar por nombre, correo o documento" data-search>
+                  <select class="form-select" data-filter-grupo>
+                    <option value="">Todos los grupos</option>
+                    @foreach($gruposEntidad as $gEnt)
+                      <option value="{{ $gEnt->nombre }}">{{ $gEnt->nombre }}</option>
+                    @endforeach
+                  </select>
+                </div>
+                <div class="grupo-list" data-list>
+                  @foreach($confirmados as $usuario)
+                    <div class="form-check d-flex align-items-center gap-2 mb-2 grupo-item"
+                      data-name="{{ strtolower($usuario['name']) }}"
+                      data-email="{{ strtolower($usuario['email'] ?? '') }}"
+                      data-doc="{{ strtolower($usuario['nro_documento'] ?? '') }}"
+                      data-grupoentidad="{{ strtolower($usuario['grupo_entidad'] ?? '—') }}">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        name="user_ids[]"
+                        value="{{ $usuario['id'] }}"
+                        {{ $miembrosGrupo->contains($usuario['id']) ? 'checked' : '' }}
+                      >
+                      <label class="form-check-label">
+                        {{ $usuario['name'] }}
+                        <small class="text-muted">({{ $usuario['email'] ?? $usuario['nro_documento'] ?? '—' }}) · {{ $usuario['grupo_entidad'] ?? '—' }}</small>
+                      </label>
+                    </div>
+                  @endforeach
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-warning text-dark">Guardar miembros</button>
+              </div>
+            </form>
+          </div>
         </div>
-        <div class="mt-3">
-          <button class="btn btn-outline-info btn-sm">Guardar miembros</button>
-        </div>
-      </form>
-    </div>
-  @empty
-    <div class="text-muted">No hay grupos creados para este evento.</div>
-  @endforelse
+      </div>
+    @empty
+      <div class="text-muted">No hay grupos creados para este evento.</div>
+    @endforelse
+  </div>
 </div>
+
+<script>
+  document.querySelectorAll('.modal-evento-grupo').forEach(modal => {
+    const searchInput = modal.querySelector('[data-search]');
+    const filterGrupo = modal.querySelector('[data-filter-grupo]');
+    const items = Array.from(modal.querySelectorAll('.grupo-item'));
+
+    const applyFilter = () => {
+      const query = (searchInput.value || '').trim().toLowerCase();
+      const grupo = (filterGrupo.value || '').trim().toLowerCase();
+      items.forEach(item => {
+        const hayTexto = !query || item.dataset.name.includes(query) || item.dataset.email.includes(query) || item.dataset.doc.includes(query);
+        const hayGrupo = !grupo || item.dataset.grupoentidad.includes(grupo);
+        item.style.display = (hayTexto && hayGrupo) ? 'flex' : 'none';
+      });
+    };
+
+    if (searchInput) {
+      searchInput.addEventListener('input', applyFilter);
+    }
+    if (filterGrupo) {
+      filterGrupo.addEventListener('change', applyFilter);
+    }
+  });
+</script>
 @endsection

@@ -7,8 +7,10 @@ use App\Models\E_AsistenciaActividad;
 use App\Models\E_Evento;
 use App\Models\E_EventoGrupo;
 use App\Models\E_EventoGrupoUsuario;
+use App\Models\E_GrupoEntidad;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class E_EventoGrupoController extends Controller
 {
@@ -21,7 +23,7 @@ class E_EventoGrupoController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $confirmados = E_AsistenciaActividad::with('usuario')
+        $confirmadosRaw = E_AsistenciaActividad::with('usuario')
             ->where('metodo_entrada', 'confirmacion')
             ->whereHas('actividad.dia', function ($q) use ($evento) {
                 $q->where('evento_id', $evento->id);
@@ -32,7 +34,34 @@ class E_EventoGrupoController extends Controller
             ->unique('id')
             ->values();
 
-        return view('admin.eventos.grupos', compact('evento', 'grupos', 'confirmados'));
+        $userIdsAll = $confirmadosRaw->pluck('id')
+            ->merge($grupos->flatMap(fn($g) => $g->usuarios->pluck('id')))
+            ->unique()
+            ->values();
+
+        $grupoEntidadPorUsuario = DB::table('E_grupo_usuarios')
+            ->join('E_grupos_entidad', 'E_grupos_entidad.id', '=', 'E_grupo_usuarios.grupo_id')
+            ->whereIn('E_grupo_usuarios.usuario_id', $userIdsAll)
+            ->select('E_grupo_usuarios.usuario_id', 'E_grupos_entidad.nombre')
+            ->get()
+            ->groupBy('usuario_id')
+            ->map(fn($rows) => $rows->pluck('nombre')->unique()->implode(', '));
+
+        $confirmados = $confirmadosRaw->map(function ($u) use ($grupoEntidadPorUsuario) {
+            return [
+                'id' => $u->id,
+                'name' => trim(($u->name ?? '') . ' ' . ($u->apellidos ?? '')),
+                'email' => $u->email,
+                'nro_documento' => $u->nro_documento,
+                'grupo_entidad' => $grupoEntidadPorUsuario[$u->id] ?? '—',
+            ];
+        })->values();
+
+        $gruposEntidad = E_GrupoEntidad::where('entidad_id', $evento->entidad_id)
+            ->orderBy('nombre')
+            ->get(['id', 'nombre']);
+
+        return view('admin.eventos.grupos', compact('evento', 'grupos', 'confirmados', 'gruposEntidad', 'grupoEntidadPorUsuario'));
     }
 
     public function store(Request $request, E_Evento $evento)
