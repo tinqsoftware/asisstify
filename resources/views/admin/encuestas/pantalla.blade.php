@@ -340,6 +340,7 @@
     display: flex;
     gap: 10px;
     align-items: center;
+    flex-wrap: wrap;
     background: rgba(15,23,42,.8);
     border: 1px solid rgba(148,163,184,.35);
     padding: 8px 10px;
@@ -441,12 +442,25 @@
     box-shadow:
       0 22px 50px rgba(0,0,0,.9),
       0 0 0 2px rgba(251,191,36,.45);
-    animation: winnerFloat 6.5s ease-in-out infinite;
   }
 
   @keyframes winnerFloat {
     0% { transform: translateY(-10px) scale(1.22); }
     50% { transform: translateY(-22px) scale(1.26); }
+    100% { transform: translateY(-10px) scale(1.22); }
+  }
+
+  .opciones-grid.winner-only .opcion-card.winner-float {
+    animation: winnerFloat 6.5s ease-in-out infinite;
+  }
+
+  .opciones-grid.winner-only .opcion-card.winner-reveal {
+    animation: winnerReveal 1.6s ease-out forwards;
+  }
+
+  @keyframes winnerReveal {
+    0% { transform: translateY(-10px) scale(1); }
+    60% { transform: translateY(-18px) scale(1.34); }
     100% { transform: translateY(-10px) scale(1.22); }
   }
  
@@ -537,9 +551,6 @@
     <div class="total-votos">
       Total de votos: <strong id="labelTotalVotos">0</strong>
     </div>
-    <button id="btnRankingToggle" class="btn-ranking-toggle" style="display:none;" type="button">
-      Mostrar ranking
-    </button>
     <div class="estado-mensaje">
       <span class="label">Estado de pantalla</span>
       <span id="labelMensajeEstado">Esperando resultados…</span>
@@ -547,6 +558,9 @@
   </div>
 
   <div class="panel-controles">
+    <button id="btnRankingToggle" class="btn-ranking-toggle" style="display:none;" type="button">
+      Mostrar ranking
+    </button>
     @if($prevEncuesta)
       <a href="{{ route('admin.eventos.encuestas.pantalla', [$evento->id, $prevEncuesta->id]) }}" class="btn btn-outline-light">Anterior</a>
     @endif
@@ -586,6 +600,7 @@
   let animacionGanadorHecha = false;
   let rankingVisible = false;
   let shuffleOrderIds = null;
+  let lastShuffleAt = 0;
 
   function calcularLayout(total) {
     if (total <= 0) return { rows: 0, cols: 0 };
@@ -671,9 +686,11 @@
       const mismoSet = shuffleOrderIds
         && shuffleOrderIds.length === idsActuales.length
         && idsActuales.every(id => shuffleOrderIds.includes(id));
+      const ahora = Date.now();
 
-      if (!mismoSet) {
+      if (!mismoSet || (ahora - lastShuffleAt) > 5500) {
         shuffleOrderIds = [...idsActuales].sort(() => Math.random() - 0.5);
+        lastShuffleAt = ahora;
       }
 
       listaMostrar = shuffleOrderIds
@@ -681,6 +698,7 @@
         .filter(Boolean);
     } else {
       shuffleOrderIds = null;
+      lastShuffleAt = 0;
     }
 
     const winnerOnly = showRankingToggle && !rankingVisible && idGanador;
@@ -806,7 +824,7 @@
 
     // Si acaba de pasar de cualquier estado a CERRADA
     // → animación especial SOLO si NO es encuesta karaoke (unica_por_opcion = false)
-    if (!e.unica_por_opcion && e.estado === 'cerrada' && prevEstado !== 'cerrada') {
+    if (!e.unica_por_opcion && e.estado === 'cerrada' && prevEstado !== 'cerrada' && !winnerOnly) {
       if (pollingId) {
         clearInterval(pollingId); // ya no es necesario seguir pidiendo datos
       }
@@ -830,6 +848,26 @@
             ganadorCard.classList.remove('opcion-card--anim-win');
             animacionGanadorHecha = true;
           }, { once: true });
+        }
+      }
+    }
+
+    if (winnerOnly && idGanador) {
+      const ganadorCard = grid.querySelector('[data-opcion-id="' + idGanador + '"]');
+      if (ganadorCard) {
+        if (prevEstado !== 'cerrada') {
+          if (pollingId) {
+            clearInterval(pollingId);
+          }
+          lanzarConfetti();
+          ganadorCard.classList.add('winner-reveal');
+          ganadorCard.addEventListener('animationend', () => {
+            ganadorCard.classList.remove('winner-reveal');
+            ganadorCard.classList.add('winner-float');
+            animacionGanadorHecha = true;
+          }, { once: true });
+        } else {
+          ganadorCard.classList.add('winner-float');
         }
       }
     }
