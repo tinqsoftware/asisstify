@@ -26,7 +26,9 @@
                 <th>Nombre</th>
                 <th>Descripción</th>
                 <th>Estado</th>
-                <th>Administradores</th>
+                @if(Auth::user()->esSuperAdmin())
+                    <th>Administradores</th>
+                @endif
                 <th>Creado</th>
                 <th>Acciones</th>
             </tr>
@@ -43,22 +45,26 @@
                             <span class="badge bg-secondary">Inactivo</span>
                         @endif
                     </td>
-                    <td>
-                        @php($admins = $adminsPorEntidad[$ent->id] ?? collect())
-                        @if($admins->isEmpty())
-                            —
-                        @else
-                            {{ $admins->map(fn($a) => $a->usuario->name)->join(', ') }}
-                        @endif
-                    </td>
+                    @if(Auth::user()->esSuperAdmin())
+                        <td>
+                            @php($admins = $adminsPorEntidad[$ent->id] ?? collect())
+                            @if($admins->isEmpty())
+                                —
+                            @else
+                                {{ $admins->map(fn($a) => $a->usuario->name)->join(', ') }}
+                            @endif
+                        </td>
+                    @endif
                     <td>{{ $ent->created_at->format('d/m/Y') }}</td>
                     <td>
                         <a href="{{ route('admin.entidades.edit', $ent->id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                        <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalAdmins{{ $ent->id }}">Administradores</button>
+                        @if(Auth::user()->esSuperAdmin())
+                            <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalAdmins{{ $ent->id }}">Administradores</button>
+                        @endif
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="text-center">No hay entidades registradas.</td></tr>
+                <tr><td colspan="{{ Auth::user()->esSuperAdmin() ? 6 : 5 }}" class="text-center">No hay entidades registradas.</td></tr>
             @endforelse
         </tbody>
     </table>
@@ -66,6 +72,7 @@
     {{ $entidades->links() }}
 </div>
 
+@if(Auth::user()->esSuperAdmin())
 @foreach($entidades as $ent)
   <div class="modal fade" id="modalAdmins{{ $ent->id }}" tabindex="-1" aria-labelledby="modalAdminsLabel{{ $ent->id }}" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -107,6 +114,7 @@
     </div>
   </div>
 @endforeach
+@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

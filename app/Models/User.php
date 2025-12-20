@@ -45,6 +45,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'is_superadmin' => 'boolean',
     ];
 
 
@@ -98,7 +99,7 @@ class User extends Authenticatable
     // Verifica si es superadmin global (puedes definirlo por ID o email)
     public function esSuperAdmin()
     {
-        return in_array($this->email, ['enrique@tinq.pe']); // cámbialo
+        return (bool) ($this->is_superadmin ?? false);
     }
 
     // Verifica si tiene un rol dentro de una entidad específica

@@ -31,39 +31,42 @@
             </select>
         </div>
 
-        <hr class="my-4">
-        <h5 class="mb-3">Administradores</h5>
-        <div class="admin-selector" data-admin-selector data-owner-radio="owner_radio_edit_{{ $entidad->id }}">
-            <div class="mb-3">
-                <input type="text" class="form-control" data-admin-search placeholder="Buscar por nombre, correo o documento (mín. 3 caracteres)">
-                <div class="list-group mt-2" data-admin-results></div>
-            </div>
-            <input type="hidden" name="owner_id" value="{{ $ownerId ?? '' }}">
-            <div class="list-group" data-admin-selected>
-                @foreach($admins as $admin)
-                    <div class="list-group-item d-flex justify-content-between align-items-center" data-admin-id="{{ $admin->usuario->id }}">
-                        <div>
-                            <div class="fw-semibold">{{ $admin->usuario->name }} {{ $admin->usuario->apellidos }}</div>
-                            <small class="text-muted">{{ $admin->usuario->email ?? '—' }} {{ $admin->usuario->nro_documento ? '· ' . $admin->usuario->nro_documento : '' }}</small>
-                        </div>
-                        <div class="d-flex gap-2 align-items-center">
-                            <div class="form-check mb-0">
-                                <input class="form-check-input" type="radio" data-owner-radio name="owner_radio_edit_{{ $entidad->id }}" value="{{ $admin->usuario->id }}" {{ ($ownerId ?? null) == $admin->usuario->id ? 'checked' : '' }}>
-                                <label class="form-check-label">Propietario</label>
+        @if(Auth::user()->esSuperAdmin())
+            <hr class="my-4">
+            <h5 class="mb-3">Administradores</h5>
+            <div class="admin-selector" data-admin-selector data-owner-radio="owner_radio_edit_{{ $entidad->id }}">
+                <div class="mb-3">
+                    <input type="text" class="form-control" data-admin-search placeholder="Buscar por nombre, correo o documento (mín. 3 caracteres)">
+                    <div class="list-group mt-2" data-admin-results></div>
+                </div>
+                <input type="hidden" name="owner_id" value="{{ $ownerId ?? '' }}">
+                <div class="list-group" data-admin-selected>
+                    @foreach($admins as $admin)
+                        <div class="list-group-item d-flex justify-content-between align-items-center" data-admin-id="{{ $admin->usuario->id }}">
+                            <div>
+                                <div class="fw-semibold">{{ $admin->usuario->name }} {{ $admin->usuario->apellidos }}</div>
+                                <small class="text-muted">{{ $admin->usuario->email ?? '—' }} {{ $admin->usuario->nro_documento ? '· ' . $admin->usuario->nro_documento : '' }}</small>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger" data-remove-admin>Quitar</button>
+                            <div class="d-flex gap-2 align-items-center">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="radio" data-owner-radio name="owner_radio_edit_{{ $entidad->id }}" value="{{ $admin->usuario->id }}" {{ ($ownerId ?? null) == $admin->usuario->id ? 'checked' : '' }}>
+                                    <label class="form-check-label">Propietario</label>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-remove-admin>Quitar</button>
+                            </div>
+                            <input type="hidden" name="admin_ids[]" value="{{ $admin->usuario->id }}">
                         </div>
-                        <input type="hidden" name="admin_ids[]" value="{{ $admin->usuario->id }}">
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
             </div>
-        </div>
+        @endif
 
         <button type="submit" class="btn btn-primary">Actualizar</button>
         <a href="{{ route('admin.entidades.index') }}" class="btn btn-secondary">Volver</a>
     </form>
 </div>
 
+@if(Auth::user()->esSuperAdmin())
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchUrl = "{{ route('admin.entidades.buscarUsuarios') }}";
@@ -177,4 +180,5 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('[data-admin-selector]').forEach(initAdminSelector);
 });
 </script>
+@endif
 @endsection

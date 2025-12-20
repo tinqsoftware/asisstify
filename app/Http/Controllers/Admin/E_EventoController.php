@@ -12,13 +12,17 @@ class E_EventoController extends Controller
 {
     public function index()
     {
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
+
         $tab = request('tab', 'proximos');
         $validTabs = ['proximos', 'pasados', 'todos'];
         if (!in_array($tab, $validTabs, true)) {
             $tab = 'proximos';
         }
 
-        $user = Auth::user();
         $today = Carbon::today();
         $yesterday = Carbon::yesterday();
 
@@ -44,6 +48,9 @@ class E_EventoController extends Controller
     public function create()
     {
         $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
         if ($user->esSuperAdmin()) {
             $entidades = \App\Models\E_Entidad::orderBy('nombre')->get();
         } else {
@@ -118,6 +125,9 @@ class E_EventoController extends Controller
     public function edit($id)
     {
         $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
 
         $evento = \App\Models\E_Evento::with('dias.actividades')->findOrFail($id);
         $this->authorizeEventoAccess($evento);
@@ -234,6 +244,10 @@ class E_EventoController extends Controller
 
     public function dias($id)
     {
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
         $evento = \App\Models\E_Evento::with('dias')->findOrFail($id);
         $this->authorizeEventoAccess($evento);
         return view('admin.eventos.dias', compact('evento'));
@@ -241,6 +255,10 @@ class E_EventoController extends Controller
 
     public function agregarDia(Request $request, $id)
     {
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
         $evento = \App\Models\E_Evento::findOrFail($id);
         $this->authorizeEventoAccess($evento);
 
@@ -262,6 +280,10 @@ class E_EventoController extends Controller
 
     public function eliminarDia($id, $dia)
     {
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
         $evento = \App\Models\E_Evento::findOrFail($id);
         $this->authorizeEventoAccess($evento);
         \App\Models\E_EventoDia::where('evento_id', $id)->where('id', $dia)->delete();
@@ -270,6 +292,10 @@ class E_EventoController extends Controller
 
     public function actividades($id, $dia)
     {
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
         $evento = \App\Models\E_Evento::findOrFail($id);
         $this->authorizeEventoAccess($evento);
         $dia = \App\Models\E_EventoDia::with(['actividades'])->findOrFail($dia);
@@ -280,6 +306,10 @@ class E_EventoController extends Controller
 
     public function agregarActividad(Request $request, $id, $dia)
     {
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
         $evento = \App\Models\E_Evento::findOrFail($id);
         $this->authorizeEventoAccess($evento);
 
@@ -316,6 +346,10 @@ class E_EventoController extends Controller
 
     public function eliminarActividad($id, $dia, $actividad)
     {
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
         $evento = \App\Models\E_Evento::findOrFail($id);
         $this->authorizeEventoAccess($evento);
         \App\Models\E_Actividad::where('id', $actividad)->delete();
@@ -373,6 +407,10 @@ class E_EventoController extends Controller
     // Panel unificado de confirmados + asistidos (vista)
     public function panelAsistencias($id)
     {
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
         $evento = \App\Models\E_Evento::with([
             'dias.actividades.asistencias.usuario',
             'entidad.grupos.usuarios'
@@ -477,6 +515,10 @@ class E_EventoController extends Controller
     // Endpoint live para DataTables (se llama solo desde JS)
     public function panelAsistenciasLive($id)
     {
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
         $evento = \App\Models\E_Evento::with([
             'dias.actividades.asistencias.usuario'
         ])->findOrFail($id);
@@ -542,6 +584,10 @@ class E_EventoController extends Controller
 
     public function panelAsistenciaCamera($id)
     {
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
         $evento = \App\Models\E_Evento::findOrFail($id);
         $this->authorizeEventoAccess($evento);
         return view('admin.eventos.panel_asistencia_camera', compact('evento'));

@@ -26,18 +26,30 @@ class E_GrupoController extends Controller
             ->orderBy('created_at', 'desc');
 
         if (!$user->esSuperAdmin()) {
-            $entidadIds = $user->adminEntidadIds();
-            $query->whereIn('entidad_id', $entidadIds);
+            if ($user->tieneRolEntidad('ADMIN')) {
+                $entidadIds = $user->adminEntidadIds();
+                $query->whereIn('entidad_id', $entidadIds);
+            } else {
+                $query->whereHas('usuarios', function ($q) use ($user) {
+                    $q->where('users.id', $user->id);
+                });
+            }
         }
 
         $grupos = $query->paginate(10);
 
-        return view('admin.grupos.index', compact('grupos'));
+        $adminEntidadIds = $user->adminEntidadIds()->all();
+        $userGroupIds = $user->grupos()->pluck('E_grupos_entidad.id')->all();
+
+        return view('admin.grupos.index', compact('grupos', 'adminEntidadIds', 'userGroupIds'));
     }
 
     public function create()
     {
         $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
         if ($user->esSuperAdmin()) {
             $entidades = E_Entidad::orderBy('nombre')->get();
         } else {
@@ -73,14 +85,14 @@ class E_GrupoController extends Controller
     public function edit($id)
     {
         $grupo = E_GrupoEntidad::findOrFail($id);
-        $this->authorizeGrupoAccess($grupo);
+        $this->authorizeGrupoManage($grupo);
         return view('admin.grupos.edit', compact('grupo'));
     }
 
     public function update(Request $request, $id)
     {
         $grupo = E_GrupoEntidad::findOrFail($id);
-        $this->authorizeGrupoAccess($grupo);
+        $this->authorizeGrupoManage($grupo);
 
         $request->validate([
             'nombre' => 'required|string|max:150',
@@ -96,14 +108,15 @@ class E_GrupoController extends Controller
     public function miembros($id)
     {
         $grupo = E_GrupoEntidad::with(['usuarios'])->findOrFail($id);
-        $this->authorizeGrupoAccess($grupo);
-        return view('admin.grupos.miembros', compact('grupo'));
+        $this->authorizeGrupoView($grupo);
+        $canManage = $this->canManageGrupo($grupo);
+        return view('admin.grupos.miembros', compact('grupo', 'canManage'));
     }
 
     public function buscarUsuarios(Request $request, $id)
     {
         $grupo = E_GrupoEntidad::findOrFail($id);
-        $this->authorizeGrupoAccess($grupo);
+        $this->authorizeGrupoManage($grupo);
         $q = trim($request->get('q'));
 
         if (strlen($q) < 3) {
@@ -125,7 +138,7 @@ class E_GrupoController extends Controller
     public function agregarUsuario(Request $request, $id)
     {
         $grupo = E_GrupoEntidad::findOrFail($id);
-        $this->authorizeGrupoAccess($grupo);
+        $this->authorizeGrupoManage($grupo);
         $usuario_id = $request->usuario_id;
 
         $existe = E_GrupoUsuario::where('grupo_id', $id)
@@ -150,7 +163,7 @@ class E_GrupoController extends Controller
     public function eliminarUsuario($id, $usuario_id)
     {
         $grupo = E_GrupoEntidad::findOrFail($id);
-        $this->authorizeGrupoAccess($grupo);
+        $this->authorizeGrupoManage($grupo);
         E_GrupoUsuario::where('grupo_id', $id)
                     ->where('usuario_id', $usuario_id)
                     ->delete();
@@ -161,7 +174,7 @@ class E_GrupoController extends Controller
     public function registrarUsuario(Request $request, $id)
     {
         $grupo = E_GrupoEntidad::findOrFail($id);
-        $this->authorizeGrupoAccess($grupo);
+        $this->authorizeGrupoManage($grupo);
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -235,15 +248,36 @@ class E_GrupoController extends Controller
         );
     }
 
-    private function authorizeGrupoAccess(E_GrupoEntidad $grupo)
+    private function authorizeGrupoView(E_GrupoEntidad $grupo)
     {
         $user = Auth::user();
-        if ($user->esSuperAdmin()) {
+        if ($this->canManageGrupo($grupo)) {
             return;
         }
 
-        if (!$user->adminEntidadIds()->contains($grupo->entidad_id)) {
+        $esMiembro = E_GrupoUsuario::where('grupo_id', $grupo->id)
+            ->where('usuario_id', $user->id)
+            ->exists();
+
+        if (!$esMiembro) {
             abort(403);
         }
+    }
+
+    private function authorizeGrupoManage(E_GrupoEntidad $grupo)
+    {
+        if (!$this->canManageGrupo($grupo)) {
+            abort(403);
+        }
+    }
+
+    private function canManageGrupo(E_GrupoEntidad $grupo)
+    {
+        $user = Auth::user();
+        if ($user->esSuperAdmin()) {
+            return true;
+        }
+
+        return $user->adminEntidadIds()->contains($grupo->entidad_id);
     }
 }

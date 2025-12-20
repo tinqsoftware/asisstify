@@ -78,8 +78,12 @@ class E_EntidadController extends Controller
     {
         $entidad = E_Entidad::findOrFail($id);
         $this->authorizeEntidadAccess($entidad);
-        $admins = $this->getAdmins($entidad);
-        $ownerId = optional($admins->firstWhere('es_propietario', 1))->usuario_id;
+        $admins = collect();
+        $ownerId = null;
+        if (Auth::user()->esSuperAdmin()) {
+            $admins = $this->getAdmins($entidad);
+            $ownerId = optional($admins->firstWhere('es_propietario', 1))->usuario_id;
+        }
 
         return view('admin.entidades.edit', compact('entidad', 'admins', 'ownerId'));
     }
@@ -90,9 +94,6 @@ class E_EntidadController extends Controller
             'nombre' => 'required|string|max:200',
             'descripcion' => 'nullable|string',
             'estado' => 'required|boolean',
-            'admin_ids' => 'required|array|min:1',
-            'admin_ids.*' => 'integer|exists:users,id',
-            'owner_id' => 'nullable|integer|exists:users,id',
         ]);
 
         $entidad = E_Entidad::findOrFail($id);
@@ -103,9 +104,16 @@ class E_EntidadController extends Controller
             'estado' => $request->estado,
         ]);
 
-        $adminIds = $request->input('admin_ids', []);
-        $ownerId = $request->input('owner_id');
-        $this->syncAdmins($entidad, $adminIds, $ownerId);
+        if (Auth::user()->esSuperAdmin()) {
+            $request->validate([
+                'admin_ids' => 'required|array|min:1',
+                'admin_ids.*' => 'integer|exists:users,id',
+                'owner_id' => 'nullable|integer|exists:users,id',
+            ]);
+            $adminIds = $request->input('admin_ids', []);
+            $ownerId = $request->input('owner_id');
+            $this->syncAdmins($entidad, $adminIds, $ownerId);
+        }
 
         return redirect()->route('admin.entidades.index')
             ->with('success', 'Entidad actualizada correctamente.');
@@ -133,6 +141,9 @@ class E_EntidadController extends Controller
 
     public function syncAdminsRequest(Request $request, $id)
     {
+        if (!Auth::user()->esSuperAdmin()) {
+            abort(403);
+        }
         $request->validate([
             'admin_ids' => 'required|array|min:1',
             'admin_ids.*' => 'integer|exists:users,id',

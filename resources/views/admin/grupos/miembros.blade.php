@@ -7,7 +7,9 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="fw-semibold text-dark">Miembros del Grupo: {{ $grupo->nombre }}</h3>
     <div class="d-flex gap-2">
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalRegistrarUsuario">Registrar Usuario</button>
+      @if($canManage)
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalRegistrarUsuario">Registrar Usuario</button>
+      @endif
       <a href="{{ route('admin.grupos.index') }}" class="btn btn-outline-secondary">Volver</a>
     </div>
   </div>
@@ -26,11 +28,13 @@
     </div>
   @endif
 
-  <div class="card shadow-sm p-4 mb-4 border-0">
-    <h5 class="fw-semibold mb-3">Agregar Miembro</h5>
-    <input type="text" id="buscarUsuario" class="form-control" placeholder="Escribe nombre, apellido, correo o documento (mínimo 3 letras)">
-    <div id="resultadosUsuarios" class="list-group mt-2"></div>
-  </div>
+  @if($canManage)
+    <div class="card shadow-sm p-4 mb-4 border-0">
+      <h5 class="fw-semibold mb-3">Agregar Miembro</h5>
+      <input type="text" id="buscarUsuario" class="form-control" placeholder="Escribe nombre, apellido, correo o documento (mínimo 3 letras)">
+      <div id="resultadosUsuarios" class="list-group mt-2"></div>
+    </div>
+  @endif
 
   <div class="card shadow-sm p-4 border-0">
     <h5 class="fw-semibold mb-3">Lista de Miembros</h5>
@@ -50,9 +54,13 @@
             <td>{{ $usuario->email }}</td>
             <td>{{ $usuario->nro_documento }}</td>
             <td>
-              <button class="btn btn-sm btn-outline-danger eliminarUsuario" data-id="{{ $usuario->id }}">
-                🗑 Eliminar
-              </button>
+              @if($canManage)
+                <button class="btn btn-sm btn-outline-danger eliminarUsuario" data-id="{{ $usuario->id }}">
+                  🗑 Eliminar
+                </button>
+              @else
+                —
+              @endif
             </td>
           </tr>
         @empty
@@ -63,6 +71,7 @@
   </div>
 </div>
 
+@if($canManage)
 <!-- Modal Registrar Usuario -->
 <div class="modal fade" id="modalRegistrarUsuario" tabindex="-1" aria-labelledby="modalRegistrarUsuarioLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -109,12 +118,14 @@
     </div>
   </div>
 </div>
+@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const hasErrors = {{ $errors->any() ? 'true' : 'false' }};
-  if (hasErrors) {
-    const modal = new bootstrap.Modal(document.getElementById('modalRegistrarUsuario'));
+  const modalEl = document.getElementById('modalRegistrarUsuario');
+  if (hasErrors && modalEl) {
+    const modal = new bootstrap.Modal(modalEl);
     modal.show();
   }
 
@@ -132,27 +143,29 @@ document.addEventListener('DOMContentLoaded', function() {
     updatePasswordHint();
   }
 
-  buscarInput.addEventListener('input', function() {
-    const q = this.value.trim();
-    if (q.length < 3) {
-      resultadosDiv.innerHTML = '';
-      return;
-    }
-
-    fetch(`{{ route('admin.grupos.buscarUsuarios', $grupo->id) }}?q=${q}`)
-      .then(res => res.json())
-      .then(data => {
+  if (buscarInput && resultadosDiv) {
+    buscarInput.addEventListener('input', function() {
+      const q = this.value.trim();
+      if (q.length < 3) {
         resultadosDiv.innerHTML = '';
-        data.forEach(u => {
-          const item = document.createElement('a');
-          item.href = '#';
-          item.className = 'list-group-item list-group-item-action';
-          item.textContent = `${u.name} ${u.apellidos || ''} (${u.email})`;
-          item.addEventListener('click', () => agregarMiembro(u.id, `${u.name} ${u.apellidos || ''}`));
-          resultadosDiv.appendChild(item);
+        return;
+      }
+
+      fetch(`{{ route('admin.grupos.buscarUsuarios', $grupo->id) }}?q=${q}`)
+        .then(res => res.json())
+        .then(data => {
+          resultadosDiv.innerHTML = '';
+          data.forEach(u => {
+            const item = document.createElement('a');
+            item.href = '#';
+            item.className = 'list-group-item list-group-item-action';
+            item.textContent = `${u.name} ${u.apellidos || ''} (${u.email})`;
+            item.addEventListener('click', () => agregarMiembro(u.id, `${u.name} ${u.apellidos || ''}`));
+            resultadosDiv.appendChild(item);
+          });
         });
-      });
-  });
+    });
+  }
 
   function agregarMiembro(usuario_id, nombre) {
     if (!confirm(`¿Agregar a ${nombre} al grupo?`)) return;

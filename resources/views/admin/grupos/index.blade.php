@@ -5,7 +5,9 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h3>Gestión de Grupos</h3>
-  <a href="{{ route('admin.grupos.create') }}" class="btn btn-primary">Nuevo Grupo</a>
+  @if(Auth::user()->esSuperAdmin() || Auth::user()->tieneRolEntidad('ADMIN'))
+    <a href="{{ route('admin.grupos.create') }}" class="btn btn-primary">Nuevo Grupo</a>
+  @endif
 </div>
 
 @if(session('success'))
@@ -42,8 +44,16 @@
         </td>
         <td>{{ $grupo->created_at->format('d/m/Y') }}</td>
         <td>
-          <a href="{{ route('admin.grupos.miembros', $grupo->id) }}" class="btn btn-sm btn-outline-primary">👥 Miembros</a>
-          <a href="{{ route('admin.grupos.edit', $grupo->id) }}" class="btn btn-sm btn-outline-dark">Editar</a>
+          @php
+            $canManage = Auth::user()->esSuperAdmin() || in_array($grupo->entidad_id, $adminEntidadIds ?? []);
+            $canViewMembers = $canManage || in_array($grupo->id, $userGroupIds ?? []);
+          @endphp
+          @if($canViewMembers)
+            <a href="{{ route('admin.grupos.miembros', $grupo->id) }}" class="btn btn-sm btn-outline-primary">👥 Miembros</a>
+          @endif
+          @if($canManage)
+            <a href="{{ route('admin.grupos.edit', $grupo->id) }}" class="btn btn-sm btn-outline-dark">Editar</a>
+          @endif
         </td>
       </tr>
     @empty
