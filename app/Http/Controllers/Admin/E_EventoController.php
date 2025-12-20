@@ -354,11 +354,7 @@ class E_EventoController extends Controller
         $data = $request->validate([
             'titulo' => 'required|string|max:255',
             'descripcion' => 'nullable|string',
-            'imagen' => 'nullable|image|max:4096',
-            'asistencia_rostro' => 'nullable|boolean',
-            'asistencia_documento' => 'nullable|boolean',
-            'asistencia_qr' => 'nullable|boolean',
-            'mostrar_lista_asistencias' => 'nullable|boolean',
+            'imagen' => 'nullable|image|max:8192',
         ]);
 
         if ($request->hasFile('imagen')) {

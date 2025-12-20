@@ -297,6 +297,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     lista: @json((bool) ($actividad->mostrar_lista_asistencias ?? true)),
   };
 
+  if (!config.rostro && !config.documento && !config.qr) {
+    config.documento = true;
+  }
+
   const savedLayout = @json($actividad->asistencia_layout ?? null);
 
   const widgets = {
