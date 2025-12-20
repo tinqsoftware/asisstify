@@ -176,7 +176,7 @@
 
   .panel-lista {
     min-width: 220px;
-    max-height: 320px;
+    max-height: 240px;
     font-size: calc(0.9rem * var(--font-scale, 1));
   }
 
@@ -190,7 +190,7 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    max-height: 230px;
+    max-height: 170px;
     overflow-y: auto;
   }
 
