@@ -12,50 +12,110 @@
   </div>
 
   @php
-    $conteoGrupos = $miembros->groupBy('grupo')->map->count();
+    $gruposDetalle = $miembros->groupBy('grupo')->map(function ($items) {
+        return [
+            'miembros' => $items,
+            'confirmados' => $items->where('estado', 'Confirmado')->count(),
+            'asistidos' => $items->where('estado', 'Asistió')->count(),
+        ];
+    });
   @endphp
-  <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
-    @foreach($conteoGrupos as $grupoNombre => $cantidad)
-      <span class="badge grupo-badge" data-grupo="{{ $grupoNombre }}">
-        {{ $grupoNombre }}: {{ $cantidad }}
-      </span>
-    @endforeach
-  </div>
 
-  <table id="tablaAsistencias" class="table table-bordered table-striped w-100">
-    <thead class="table-light">
-      <tr>
-        <th>Miembro</th>
-        <th>Entidad</th>
-        <th>Grupo</th>
-        <th>Estado</th>
-        <th>Fecha</th>
-        <th>Hora</th>
-      </tr>
-    </thead>
-    <tbody>
-      @foreach($miembros as $m)
-        <tr>
-          <td>{{ $m['miembro'] }}</td>
-          <td>{{ $m['entidad'] }}</td>
-          <td>
-            <span class="badge grupo-badge" data-grupo="{{ $m['grupo'] }}">{{ $m['grupo'] }}</span>
-          </td>
-          <td>
-            @if($m['estado'] === 'Confirmado')
-              <span class="badge bg-warning text-dark">Confirmado</span>
-            @elseif($m['estado'] === 'Asistió')
-              <span class="badge bg-success">Asistió</span>
-            @else
-              <span class="badge bg-info text-dark">Mixto</span>
-            @endif
-          </td>
-          <td>{{ $m['fecha'] }}</td>
-          <td>{{ $m['hora'] }}</td>
-        </tr>
-      @endforeach
-    </tbody>
-  </table>
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabGeneral" type="button">General</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabGrupos" type="button">Por grupos</button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="tabGeneral">
+      <table id="tablaAsistencias" class="table table-bordered table-striped w-100">
+        <thead class="table-light">
+          <tr>
+            <th>Miembro</th>
+            <th>Entidad</th>
+            <th>Grupo</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach($miembros as $m)
+            <tr>
+              <td>{{ $m['miembro'] }}</td>
+              <td>{{ $m['entidad'] }}</td>
+              <td>
+                <span class="badge grupo-badge" data-grupo="{{ $m['grupo'] }}">{{ $m['grupo'] }}</span>
+              </td>
+              <td>
+                @if($m['estado'] === 'Confirmado')
+                  <span class="badge bg-warning text-dark">Confirmado</span>
+                @elseif($m['estado'] === 'Asistió')
+                  <span class="badge bg-success">Asistió</span>
+                @else
+                  <span class="badge bg-info text-dark">Mixto</span>
+                @endif
+              </td>
+              <td>{{ $m['fecha'] }}</td>
+              <td>{{ $m['hora'] }}</td>
+            </tr>
+          @endforeach
+        </tbody>
+      </table>
+    </div>
+    <div class="tab-pane fade" id="tabGrupos">
+      <div class="accordion" id="gruposAccordion">
+        @foreach($gruposDetalle as $grupoNombre => $detalle)
+          @php $grupoId = 'grupo' . md5($grupoNombre); @endphp
+          <div class="accordion-item bg-transparent border-0 mb-2">
+            <h2 class="accordion-header" id="heading{{ $grupoId }}">
+              <button class="accordion-button collapsed bg-transparent text-light border rounded" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $grupoId }}" aria-expanded="false">
+                <span class="badge grupo-badge me-2" data-grupo="{{ $grupoNombre }}">{{ $grupoNombre }}</span>
+                <span class="me-2">Confirmados: {{ $detalle['confirmados'] }}</span>
+                <span>Asistidos: {{ $detalle['asistidos'] }}</span>
+              </button>
+            </h2>
+            <div id="collapse{{ $grupoId }}" class="accordion-collapse collapse" data-bs-parent="#gruposAccordion">
+              <div class="accordion-body pt-2">
+                <table class="table table-bordered table-striped w-100">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Miembro</th>
+                      <th>Estado</th>
+                      <th>Fecha</th>
+                      <th>Hora</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @foreach($detalle['miembros'] as $m)
+                      <tr>
+                        <td>{{ $m['miembro'] }}</td>
+                        <td>
+                          @if($m['estado'] === 'Confirmado')
+                            <span class="badge bg-warning text-dark">Confirmado</span>
+                          @elseif($m['estado'] === 'Asistió')
+                            <span class="badge bg-success">Asistió</span>
+                          @else
+                            <span class="badge bg-info text-dark">Mixto</span>
+                          @endif
+                        </td>
+                        <td>{{ $m['fecha'] }}</td>
+                        <td>{{ $m['hora'] }}</td>
+                      </tr>
+                    @endforeach
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        @endforeach
+      </div>
+    </div>
+  </div>
 </div>
 
 {{-- DataTables --}}
