@@ -85,11 +85,15 @@ class RostroController extends Controller
         }
 
         // Evitar duplicados
-        $registroExistente = E_AsistenciaActividad::where('actividad_id', $request->actividad_id)
+        $registroAsistencia = E_AsistenciaActividad::where('actividad_id', $request->actividad_id)
             ->where('usuario_id', $usuario->id)
             ->where('metodo_entrada', '!=', 'confirmacion')
             ->first();
-        $yaExiste = (bool) $registroExistente;
+        $registroConfirmacion = E_AsistenciaActividad::where('actividad_id', $request->actividad_id)
+            ->where('usuario_id', $usuario->id)
+            ->where('metodo_entrada', 'confirmacion')
+            ->first();
+        $yaExiste = (bool) $registroAsistencia;
 
         $metodoEntrada = $request->metodo_entrada ?: 'rostro';
         if ($metodoEntrada === 'documento') {
@@ -97,7 +101,15 @@ class RostroController extends Controller
         }
         $userCreateId = $usuario->id ?: 1;
 
-        if (!$yaExiste) {
+        if ($registroAsistencia) {
+            // Ya tiene una asistencia real registrada, no duplicar.
+        } elseif ($registroConfirmacion) {
+            $registroConfirmacion->update([
+                'hora_entrada' => $registroConfirmacion->hora_entrada ?: Carbon::now(),
+                'metodo_entrada' => $metodoEntrada,
+                'id_user_create' => $userCreateId,
+            ]);
+        } else {
             E_AsistenciaActividad::create([
                 'actividad_id' => $request->actividad_id,
                 'usuario_id' => $usuario->id,
