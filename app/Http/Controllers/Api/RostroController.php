@@ -63,15 +63,22 @@ class RostroController extends Controller
         }
 
         // Evitar duplicados
-        $yaExiste = E_AsistenciaActividad::where('actividad_id', $request->actividad_id)
+        $registroExistente = E_AsistenciaActividad::where('actividad_id', $request->actividad_id)
             ->where('usuario_id', $usuario->id)
-            ->exists();
+            ->first();
+        $yaExiste = (bool) $registroExistente;
 
         if (!$yaExiste) {
             E_AsistenciaActividad::create([
                 'actividad_id' => $request->actividad_id,
                 'usuario_id' => $usuario->id,
                 'hora_entrada' => Carbon::now(),
+                'metodo_entrada' => $request->metodo_entrada ?: 'rostro',
+                'id_user_create' => $usuario->id,
+            ]);
+        } elseif ($registroExistente && $registroExistente->metodo_entrada === 'confirmacion') {
+            $registroExistente->update([
+                'hora_entrada' => $registroExistente->hora_entrada ?: Carbon::now(),
                 'metodo_entrada' => $request->metodo_entrada ?: 'rostro',
                 'id_user_create' => $usuario->id,
             ]);
