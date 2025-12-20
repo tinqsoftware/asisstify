@@ -1,4 +1,4 @@
-@extends('layouts.backoffice')
+@extends('layouts.event_app')
 
 @section('title', 'Editar Grupo')
 
