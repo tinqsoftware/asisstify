@@ -140,21 +140,19 @@
         <ul class="navbar-nav ms-auto align-items-center">
           @if(Auth::check())
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                ADMIN
-              </a>
-              <ul class="dropdown-menu dropdown-menu-dark shadow" aria-labelledby="adminMenu">
-                @if(Auth::user()->esSuperAdmin())
-                  <li><a class="dropdown-item" href="{{ route('admin.entidades.index') }}">Entidades</a></li>
+              @if(Auth::user()->esSuperAdmin() || Auth::user()->tieneRolEntidad('ADMIN'))
+                <a class="nav-link dropdown-toggle" href="#" id="adminMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  ADMIN
+                </a>
+                <ul class="dropdown-menu dropdown-menu-dark shadow" aria-labelledby="adminMenu">
+                  @if(Auth::user()->esSuperAdmin())
+                    <li><a class="dropdown-item" href="{{ route('admin.entidades.index') }}">Entidades</a></li>
+                  @endif
                   <li><a class="dropdown-item" href="{{ route('admin.roles.index') }}">Roles de Entidad</a></li>
-                  <li><hr class="dropdown-divider"></li>
-                @endif
-
-                @if(Auth::user()->tieneRolEntidad('ADMIN') || Auth::user()->tieneRolEntidad('STAFF') || Auth::user()->esSuperAdmin())
                   <li><a class="dropdown-item" href="{{ route('admin.grupos.index') }}">Grupos</a></li>
-                @endif
-                <li><a class="dropdown-item" href="{{ route('admin.eventos.index') }}">Eventos</a></li>
-              </ul>
+                  <li><a class="dropdown-item" href="{{ route('admin.eventos.index') }}">Eventos</a></li>
+                </ul>
+              @endif
             </li>
 
             <li class="nav-item">

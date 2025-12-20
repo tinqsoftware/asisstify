@@ -30,20 +30,19 @@
                         </li>
 
                         @if(Auth::user())
+                        @if(Auth::user()->esSuperAdmin() || Auth::user()->tieneRolEntidad('ADMIN'))
                         <li class="menu-item menu-item-has-children">
                           <a href="#">ADMIN</a>
                           <ul class="sub-menu">
                             @if(Auth::user()->esSuperAdmin())
                               <li><a href="{{ route('admin.entidades.index') }}">Entidades</a></li>
-                              <li><a href="{{ route('admin.roles.index') }}">Roles de Entidad</a></li>
                             @endif
-
-                            @if(Auth::user()->tieneRolEntidad('ADMIN') || Auth::user()->tieneRolEntidad('STAFF'))
-                              <li><a href="{{ route('admin.grupos.index') }}">Grupos</a></li>
-                              <li><a href="{{ route('admin.eventos.index') }}">Eventos</a></li>
-                            @endif
+                            <li><a href="{{ route('admin.roles.index') }}">Roles de Entidad</a></li>
+                            <li><a href="{{ route('admin.grupos.index') }}">Grupos</a></li>
+                            <li><a href="{{ route('admin.eventos.index') }}">Eventos</a></li>
                           </ul>
                         </li>
+                        @endif
 
                         <li class="menu-item menu-item-has-children">
                           <a href="{{ route('mis.asistencias') }}">Mis Asistencias</a>

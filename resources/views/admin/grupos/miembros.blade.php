@@ -6,8 +6,25 @@
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="fw-semibold text-dark">Miembros del Grupo: {{ $grupo->nombre }}</h3>
-    <a href="{{ route('admin.grupos.index') }}" class="btn btn-outline-secondary">Volver</a>
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalRegistrarUsuario">Registrar Usuario</button>
+      <a href="{{ route('admin.grupos.index') }}" class="btn btn-outline-secondary">Volver</a>
+    </div>
   </div>
+
+  @if(session('success'))
+    <div class="alert alert-success">{{ session('success') }}</div>
+  @endif
+
+  @if($errors->any())
+    <div class="alert alert-danger">
+      <ul class="mb-0">
+        @foreach($errors->all() as $error)
+          <li>{{ $error }}</li>
+        @endforeach
+      </ul>
+    </div>
+  @endif
 
   <div class="card shadow-sm p-4 mb-4 border-0">
     <h5 class="fw-semibold mb-3">Agregar Miembro</h5>
@@ -46,10 +63,74 @@
   </div>
 </div>
 
+<!-- Modal Registrar Usuario -->
+<div class="modal fade" id="modalRegistrarUsuario" tabindex="-1" aria-labelledby="modalRegistrarUsuarioLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalRegistrarUsuarioLabel">Registrar Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{{ route('admin.grupos.registrarUsuario', $grupo->id) }}">
+          @csrf
+          <div class="mb-3">
+            <input type="text" class="form-control" name="name" value="{{ old('name') }}" placeholder="Nombre completo" required>
+          </div>
+          <div class="mb-3">
+            <input type="email" class="form-control" name="email" value="{{ old('email') }}" placeholder="Correo electrónico (opcional)">
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-4">
+              <select class="form-select" name="tipo_documento">
+                <option value="1" {{ old('tipo_documento', '1') === '1' ? 'selected' : '' }}>DNI</option>
+                <option value="2" {{ old('tipo_documento') === '2' ? 'selected' : '' }}>CE</option>
+                <option value="3" {{ old('tipo_documento') === '3' ? 'selected' : '' }}>PST</option>
+                <option value="4" {{ old('tipo_documento') === '4' ? 'selected' : '' }}>RUC</option>
+              </select>
+            </div>
+            <div class="col-8">
+              <input type="text" class="form-control" name="nro_documento" value="{{ old('nro_documento') }}" placeholder="Número de documento (opcional)">
+            </div>
+          </div>
+          <div class="mb-3">
+            <select class="form-select" name="sexo">
+              <option value="" {{ old('sexo') === null || old('sexo') === '' ? 'selected' : '' }}>Seleccionar sexo</option>
+              <option value="M" {{ old('sexo') === 'M' ? 'selected' : '' }}>Masculino</option>
+              <option value="F" {{ old('sexo') === 'F' ? 'selected' : '' }}>Femenino</option>
+            </select>
+          </div>
+          <div class="alert alert-info mb-3">
+            La contraseña de este usuario es: <strong id="passwordHint">12345678</strong>
+          </div>
+          <button type="submit" class="btn btn-success w-100">Registrar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  const hasErrors = {{ $errors->any() ? 'true' : 'false' }};
+  if (hasErrors) {
+    const modal = new bootstrap.Modal(document.getElementById('modalRegistrarUsuario'));
+    modal.show();
+  }
+
   const buscarInput = document.getElementById('buscarUsuario');
   const resultadosDiv = document.getElementById('resultadosUsuarios');
+  const nroDocumentoInput = document.querySelector('input[name="nro_documento"]');
+  const passwordHint = document.getElementById('passwordHint');
+
+  if (nroDocumentoInput && passwordHint) {
+    const updatePasswordHint = () => {
+      const value = nroDocumentoInput.value.trim();
+      passwordHint.textContent = value.length ? value : '12345678';
+    };
+    nroDocumentoInput.addEventListener('input', updatePasswordHint);
+    updatePasswordHint();
+  }
 
   buscarInput.addEventListener('input', function() {
     const q = this.value.trim();

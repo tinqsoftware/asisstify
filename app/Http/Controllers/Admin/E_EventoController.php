@@ -18,11 +18,17 @@ class E_EventoController extends Controller
             $tab = 'proximos';
         }
 
+        $user = Auth::user();
         $today = Carbon::today();
         $yesterday = Carbon::yesterday();
 
         $query = E_Evento::with('dias.actividades.asistencias')
             ->orderBy('created_at', 'desc');
+
+        if (!$user->esSuperAdmin()) {
+            $entidadIds = $user->adminEntidadIds();
+            $query->whereIn('entidad_id', $entidadIds);
+        }
 
         if ($tab === 'pasados') {
             $query->whereDate('fecha_fin', '<=', $yesterday);
@@ -38,17 +44,13 @@ class E_EventoController extends Controller
     public function create()
     {
         $user = Auth::user();
-
-        // Entidades creadas directamente por el usuario
-        $entidades = \App\Models\E_Entidad::where('id_user_create', $user->id);
-
-        // Entidades a las que pertenece el usuario mediante un grupo
-        $entidadesGrupo = \App\Models\E_Entidad::whereHas('grupos.usuarios', function ($q) use ($user) {
-            $q->where('users.id', $user->id);
-        });
-
-        // Unir ambas colecciones sin duplicados
-        $entidades = $entidades->union($entidadesGrupo)->get();
+        if ($user->esSuperAdmin()) {
+            $entidades = \App\Models\E_Entidad::orderBy('nombre')->get();
+        } else {
+            $entidades = \App\Models\E_Entidad::whereIn('id', $user->adminEntidadIds())
+                ->orderBy('nombre')
+                ->get();
+        }
 
         return view('admin.eventos.create', compact('entidades'));
     }
@@ -61,6 +63,11 @@ class E_EventoController extends Controller
             'fecha_inicio' => 'required|date',
             'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
         ]);
+
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->adminEntidadIds()->contains((int) $request->entidad_id)) {
+            abort(403);
+        }
 
         $evento = E_Evento::create([
             'entidad_id' => $request->entidad_id,
@@ -113,17 +120,15 @@ class E_EventoController extends Controller
         $user = Auth::user();
 
         $evento = \App\Models\E_Evento::with('dias.actividades')->findOrFail($id);
+        $this->authorizeEventoAccess($evento);
 
-        // Entidades creadas directamente por el usuario
-        $entidades = \App\Models\E_Entidad::where('id_user_create', $user->id);
-
-        // Entidades a las que pertenece el usuario mediante un grupo
-        $entidadesGrupo = \App\Models\E_Entidad::whereHas('grupos.usuarios', function ($q) use ($user) {
-            $q->where('users.id', $user->id);
-        });
-
-        // Unir ambas colecciones sin duplicados
-        $entidades = $entidades->union($entidadesGrupo)->get();
+        if ($user->esSuperAdmin()) {
+            $entidades = \App\Models\E_Entidad::orderBy('nombre')->get();
+        } else {
+            $entidades = \App\Models\E_Entidad::whereIn('id', $user->adminEntidadIds())
+                ->orderBy('nombre')
+                ->get();
+        }
 
         // Convertimos las actividades en formato compatible con FullCalendar
         $actividades = [];
@@ -147,6 +152,7 @@ class E_EventoController extends Controller
     public function update(Request $request, $id)
     {
         $evento = E_Evento::findOrFail($id);
+        $this->authorizeEventoAccess($evento);
 
         $request->validate([
             'entidad_id' => 'required|exists:E_entidades,id',
@@ -156,6 +162,11 @@ class E_EventoController extends Controller
             'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
             'estado' => 'required|in:borrador,publicado,cerrado',
         ]);
+
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->adminEntidadIds()->contains((int) $request->entidad_id)) {
+            abort(403);
+        }
 
         $evento->update([
             'entidad_id' => $request->entidad_id,
@@ -224,18 +235,22 @@ class E_EventoController extends Controller
     public function dias($id)
     {
         $evento = \App\Models\E_Evento::with('dias')->findOrFail($id);
+        $this->authorizeEventoAccess($evento);
         return view('admin.eventos.dias', compact('evento'));
     }
 
     public function agregarDia(Request $request, $id)
     {
+        $evento = \App\Models\E_Evento::findOrFail($id);
+        $this->authorizeEventoAccess($evento);
+
         $request->validate([
             'fecha' => 'required|date',
             'titulo' => 'required|string|max:150',
         ]);
 
         \App\Models\E_EventoDia::create([
-            'evento_id' => $id,
+            'evento_id' => $evento->id,
             'fecha' => $request->fecha,
             'titulo' => $request->titulo,
             'permite_asistencia' => $request->has('permite_asistencia'),
@@ -247,6 +262,8 @@ class E_EventoController extends Controller
 
     public function eliminarDia($id, $dia)
     {
+        $evento = \App\Models\E_Evento::findOrFail($id);
+        $this->authorizeEventoAccess($evento);
         \App\Models\E_EventoDia::where('evento_id', $id)->where('id', $dia)->delete();
         return back()->with('success', 'Día eliminado correctamente.');
     }
@@ -254,6 +271,7 @@ class E_EventoController extends Controller
     public function actividades($id, $dia)
     {
         $evento = \App\Models\E_Evento::findOrFail($id);
+        $this->authorizeEventoAccess($evento);
         $dia = \App\Models\E_EventoDia::with(['actividades'])->findOrFail($dia);
         $grupos = \App\Models\E_GrupoEntidad::where('entidad_id', $evento->entidad_id)->get();
 
@@ -262,6 +280,9 @@ class E_EventoController extends Controller
 
     public function agregarActividad(Request $request, $id, $dia)
     {
+        $evento = \App\Models\E_Evento::findOrFail($id);
+        $this->authorizeEventoAccess($evento);
+
         $request->validate([
             'titulo' => 'required|string|max:150',
             'descripcion' => 'nullable|string',
@@ -295,6 +316,8 @@ class E_EventoController extends Controller
 
     public function eliminarActividad($id, $dia, $actividad)
     {
+        $evento = \App\Models\E_Evento::findOrFail($id);
+        $this->authorizeEventoAccess($evento);
         \App\Models\E_Actividad::where('id', $actividad)->delete();
         return back()->with('success', 'Actividad eliminada correctamente.');
     }
@@ -354,6 +377,7 @@ class E_EventoController extends Controller
             'dias.actividades.asistencias.usuario',
             'entidad.grupos.usuarios'
         ])->findOrFail($id);
+        $this->authorizeEventoAccess($evento);
 
         // Traemos TODAS las asistencias del evento (confirmación y reales)
         $asistencias = collect();
@@ -456,6 +480,7 @@ class E_EventoController extends Controller
         $evento = \App\Models\E_Evento::with([
             'dias.actividades.asistencias.usuario'
         ])->findOrFail($id);
+        $this->authorizeEventoAccess($evento);
 
         $asistencias = collect();
         foreach ($evento->dias as $dia) {
@@ -518,6 +543,19 @@ class E_EventoController extends Controller
     public function panelAsistenciaCamera($id)
     {
         $evento = \App\Models\E_Evento::findOrFail($id);
+        $this->authorizeEventoAccess($evento);
         return view('admin.eventos.panel_asistencia_camera', compact('evento'));
+    }
+
+    private function authorizeEventoAccess(E_Evento $evento)
+    {
+        $user = Auth::user();
+        if ($user->esSuperAdmin()) {
+            return;
+        }
+
+        if (!$user->adminEntidadIds()->contains($evento->entidad_id)) {
+            abort(403);
+        }
     }
 }

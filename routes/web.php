@@ -72,6 +72,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::post('/entidades', [E_EntidadController::class, 'store'])->name('admin.entidades.store');
     Route::get('/entidades/{id}/editar', [E_EntidadController::class, 'edit'])->name('admin.entidades.edit');
     Route::put('/entidades/{id}', [E_EntidadController::class, 'update'])->name('admin.entidades.update');
+    Route::get('/entidades/buscar-usuarios', [E_EntidadController::class, 'buscarUsuarios'])->name('admin.entidades.buscarUsuarios');
+    Route::post('/entidades/{id}/admins', [E_EntidadController::class, 'syncAdminsRequest'])->name('admin.entidades.admins.sync');
 
     // ROLES DE ENTIDAD
     Route::get('/roles', [E_RolEntidadController::class, 'index'])->name('admin.roles.index');
@@ -107,6 +109,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/grupos/{id}/miembros', [E_GrupoController::class, 'miembros'])->name('admin.grupos.miembros');
     Route::get('/grupos/{id}/buscar-usuarios', [E_GrupoController::class, 'buscarUsuarios'])->name('admin.grupos.buscarUsuarios');
     Route::post('/grupos/{id}/agregar-usuario', [E_GrupoController::class, 'agregarUsuario'])->name('admin.grupos.agregarUsuario');
+    Route::post('/grupos/{id}/registrar-usuario', [E_GrupoController::class, 'registrarUsuario'])->name('admin.grupos.registrarUsuario');
     Route::delete('/grupos/{id}/eliminar-usuario/{usuario_id}', [E_GrupoController::class, 'eliminarUsuario'])->name('admin.grupos.eliminarUsuario');
 
     // DÍAS DE EVENTO

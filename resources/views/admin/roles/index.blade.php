@@ -4,7 +4,9 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3>Roles de Entidad</h3>
-        <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">Nuevo Rol</a>
+        @if(Auth::user()->esSuperAdmin())
+            <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">Nuevo Rol</a>
+        @endif
     </div>
 
     @if(session('success'))
@@ -29,7 +31,9 @@
                     <td>{{ Str::limit($rol->descripcion, 60) }}</td>
                     <td>{{ $rol->created_at->format('d/m/Y') }}</td>
                     <td>
-                        <a href="{{ route('admin.roles.edit', $rol->id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        @if(Auth::user()->esSuperAdmin())
+                            <a href="{{ route('admin.roles.edit', $rol->id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        @endif
                     </td>
                 </tr>
             @empty

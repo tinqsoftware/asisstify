@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\E_EntidadUsuario;
 
 class User extends Authenticatable
 {
@@ -21,6 +22,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'tipo_documento',
+        'nro_documento',
+        'sexo',
     ];
 
     /**
@@ -100,13 +104,22 @@ class User extends Authenticatable
     // Verifica si tiene un rol dentro de una entidad específica
     public function tieneRolEntidad($codigoRol)
     {
-        return $this->entidades()
-            ->whereHas('usuarios', function($q) use ($codigoRol) {
-                $q->whereHas('rol', function($r) use ($codigoRol) {
-                    $r->where('codigo', $codigoRol);
-                });
+        return E_EntidadUsuario::where('usuario_id', $this->id)
+            ->whereHas('rol', function ($q) use ($codigoRol) {
+                $q->where('codigo', $codigoRol);
             })
             ->exists();
+    }
+
+    public function adminEntidadIds()
+    {
+        return E_EntidadUsuario::where('usuario_id', $this->id)
+            ->whereHas('rol', function ($q) {
+                $q->where('codigo', 'ADMIN');
+            })
+            ->pluck('entidad_id')
+            ->unique()
+            ->values();
     }
 
     public function rostros()
