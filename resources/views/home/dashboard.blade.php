@@ -52,11 +52,13 @@
     font-size: 1.6rem;
     font-weight: 800;
     margin-bottom: 4px;
+    animation: dashFadeIn .6s ease-out;
   }
 
   .dash-sub {
     color: var(--text-muted);
     font-size: .88rem;
+    animation: dashFadeIn .7s ease-out;
   }
 
   .dash-grid {
@@ -70,7 +72,12 @@
     border: 1px solid rgba(148, 163, 184, 0.28);
     padding: 16px;
     background: rgba(2, 6, 23, 0.55);
+    animation: dashSlideUp .6s ease-out;
   }
+
+  .dash-section:nth-child(2) { animation-delay: .05s; }
+  .dash-section:nth-child(3) { animation-delay: .1s; }
+  .dash-section:nth-child(4) { animation-delay: .15s; }
 
   .dash-section h4 {
     font-size: .85rem;
@@ -90,8 +97,13 @@
     background: rgba(15, 23, 42, 0.85);
     border: 1px solid rgba(148, 163, 184, 0.25);
     margin-bottom: 8px;
+    transition: transform .2s ease, border-color .2s ease;
   }
 
+  .event-item:hover {
+    transform: translateY(-1px);
+    border-color: rgba(251, 191, 36, 0.35);
+  }
   .event-item small {
     color: var(--text-muted);
   }
@@ -159,6 +171,20 @@
     color: var(--text-muted);
   }
 
+  .event-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .event-date {
+    font-size: .7rem;
+    color: #cbd5f5;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+  }
+
   .metric-row {
     display: flex;
     align-items: center;
@@ -191,12 +217,22 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
+
+  @keyframes dashSlideUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes dashFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 </style>
 
 <div class="dash-shell">
   <div class="dash-card">
     <div class="dash-title">Hola {{ strtoupper($user->name ?? 'USUARIO') }}</div>
-    <div class="dash-sub">Tu panel rápido según tu rol.</div>
+    <div class="dash-sub">Tu panel rápido.</div>
 
     <div class="dash-grid">
       @if($isMember && !$isAdmin)
@@ -204,8 +240,10 @@
           <h4>Próximo evento</h4>
           @if($memberNext)
             <div class="cta-big">
-              <div class="fw-semibold">{{ $memberNext->titulo }}</div>
-              <small class="text-muted">{{ \Carbon\Carbon::parse($memberNext->fecha_inicio)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($memberNext->fecha_fin)->format('d/m/Y') }}</small>
+              <div class="event-title-row">
+                <div class="fw-semibold">{{ $memberNext->titulo }}</div>
+                <span class="event-date">{{ \Carbon\Carbon::parse($memberNext->fecha_inicio)->format('d/m/Y') }}</span>
+              </div>
               <a href="{{ route('mis.asistencias.evento', $memberNext->id) }}">Ver detalle</a>
             </div>
           @else
@@ -218,8 +256,10 @@
           @forelse($memberProximos as $evento)
             <div class="event-item">
               <div>
-                <div class="fw-semibold">{{ $evento->titulo }}</div>
-                <small>{{ \Carbon\Carbon::parse($evento->fecha_inicio)->format('d/m/Y') }}</small>
+                <div class="event-title-row">
+                  <div class="fw-semibold">{{ $evento->titulo }}</div>
+                  <span class="event-date">{{ \Carbon\Carbon::parse($evento->fecha_inicio)->format('d/m/Y') }}</span>
+                </div>
               </div>
               <span class="event-pill event-pill--confirmado">Confirmado</span>
             </div>
@@ -233,8 +273,10 @@
           @forelse($memberPasados as $evento)
             <div class="event-item">
               <div>
-                <div class="fw-semibold">{{ $evento->titulo }}</div>
-                <small>{{ \Carbon\Carbon::parse($evento->fecha_fin)->format('d/m/Y') }}</small>
+                <div class="event-title-row">
+                  <div class="fw-semibold">{{ $evento->titulo }}</div>
+                  <span class="event-date">{{ \Carbon\Carbon::parse($evento->fecha_fin)->format('d/m/Y') }}</span>
+                </div>
               </div>
               <span class="event-pill event-pill--asistido">Asistió</span>
             </div>
@@ -261,8 +303,10 @@
           @forelse($adminEventos as $evento)
             <div class="event-item">
               <div>
-                <div class="fw-semibold">{{ $evento->titulo }}</div>
-                <small>{{ \Carbon\Carbon::parse($evento->fecha_inicio)->format('d/m/Y') }}</small>
+                <div class="event-title-row">
+                  <div class="fw-semibold">{{ $evento->titulo }}</div>
+                  <span class="event-date">{{ \Carbon\Carbon::parse($evento->fecha_inicio)->format('d/m/Y') }}</span>
+                </div>
               </div>
               <div class="text-end">
                 <div class="event-pill event-pill--confirmado">{{ $evento->confirmados_count }} confirmados</div>
