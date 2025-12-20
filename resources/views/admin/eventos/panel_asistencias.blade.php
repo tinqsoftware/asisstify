@@ -11,6 +11,17 @@
     <span class="badge bg-success">Asistidos: {{ $totalAsistidos }}</span>
   </div>
 
+  @php
+    $conteoGrupos = $miembros->groupBy('grupo')->map->count();
+  @endphp
+  <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+    @foreach($conteoGrupos as $grupoNombre => $cantidad)
+      <span class="badge grupo-badge" data-grupo="{{ $grupoNombre }}">
+        {{ $grupoNombre }}: {{ $cantidad }}
+      </span>
+    @endforeach
+  </div>
+
   <table id="tablaAsistencias" class="table table-bordered table-striped w-100">
     <thead class="table-light">
       <tr>
@@ -86,6 +97,8 @@ function applyGroupBadgeColors(scope) {
 $(function () {
   const table = $('#tablaAsistencias').DataTable({
     order: [[0, 'asc']],
+    pageLength: 100,
+    lengthMenu: [[25, 50, 100, -1], [25, 50, 100, 'Todos']],
     language: {
       url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
     }
