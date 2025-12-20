@@ -75,6 +75,14 @@
                       Pantalla
                     </a>
 
+                    @if($encuesta->estado === 'activa' && $encuesta->modo_resultados === 'final')
+                      <a href="{{ route('admin.eventos.encuestas.pantalla', [$evento->id, $encuesta->id, 'live' => 1]) }}"
+                         target="_blank"
+                         class="btn btn-sm btn-outline-warning me-1">
+                        Ver en vivo
+                      </a>
+                    @endif
+
                     @if($encuesta->estado !== 'activa')
                       <form action="{{ route('admin.eventos.encuestas.activar', [$evento->id, $encuesta->id]) }}"
                             method="POST" class="d-inline">

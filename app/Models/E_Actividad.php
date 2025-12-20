@@ -10,7 +10,21 @@ class E_Actividad extends Model
     protected $fillable = [
         'evento_dia_id', 'titulo', 'descripcion', 'tema',
         'imagen', 'hora_inicio', 'hora_fin',
-        'id_grupo_dirigido', 'permite_asistencia', 'requiere_salida', 'requiere_asistencia', 'id_user_create'
+        'id_grupo_dirigido', 'permite_asistencia', 'requiere_salida', 'requiere_asistencia',
+        'asistencia_rostro', 'asistencia_documento', 'asistencia_qr',
+        'mostrar_lista_asistencias', 'asistencia_layout',
+        'id_user_create'
+    ];
+
+    protected $casts = [
+        'requiere_asistencia' => 'boolean',
+        'permite_asistencia' => 'boolean',
+        'requiere_salida' => 'boolean',
+        'asistencia_rostro' => 'boolean',
+        'asistencia_documento' => 'boolean',
+        'asistencia_qr' => 'boolean',
+        'mostrar_lista_asistencias' => 'boolean',
+        'asistencia_layout' => 'array',
     ];
 
     public function dia()

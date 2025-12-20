@@ -138,6 +138,15 @@
     --gap: 16px;
   }
 
+  .opciones-grid[data-size="xl"] .opcion-card {
+    min-height: 320px;
+  }
+
+  .opciones-grid[data-size="xl"] .opcion-img {
+    width: min(150px, 80%);
+    aspect-ratio: 4 / 5;
+  }
+
   .opciones-grid[data-size="lg"] {
     --gap: 14px;
   }
@@ -165,6 +174,22 @@
     transform-origin: center bottom;
     position: relative;
     overflow: hidden;
+  }
+
+  .opciones-grid.shuffle-active .opcion-card {
+    animation: shuffleDrift var(--drift-duration, 3.2s) ease-in-out infinite;
+    animation-delay: var(--drift-delay, 0s);
+    will-change: transform;
+  }
+
+  .opciones-grid.shuffle-active .opcion-card--placeholder {
+    animation: none;
+  }
+
+  @keyframes shuffleDrift {
+    0% { transform: translateX(calc(var(--drift, 12px) * -1)); }
+    50% { transform: translateX(var(--drift, 12px)); }
+    100% { transform: translateX(calc(var(--drift, 12px) * -1)); }
   }
 
   .opcion-card::before {
@@ -296,6 +321,34 @@
     font-size: .75rem;
     color: #9ca3af;
     display: block;
+  }
+
+  .panel-controles {
+    position: absolute;
+    right: 22px;
+    bottom: 22px;
+    z-index: 5;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: rgba(15,23,42,.8);
+    border: 1px solid rgba(148,163,184,.35);
+    padding: 8px 10px;
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+  }
+
+  .panel-controles form,
+  .panel-controles a {
+    margin: 0;
+  }
+
+  .panel-controles .btn {
+    border-radius: 999px;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    padding: .35rem .8rem;
   }
 
 
@@ -441,12 +494,31 @@
       <span id="labelMensajeEstado">Esperando resultados…</span>
     </div>
   </div>
+
+  <div class="panel-controles">
+    @if($encuesta->estado !== 'activa')
+      <form action="{{ route('admin.eventos.encuestas.activar', [$evento->id, $encuesta->id]) }}" method="POST">
+        @csrf
+        <button class="btn btn-success">Activar</button>
+      </form>
+    @else
+      <form action="{{ route('admin.eventos.encuestas.cerrar', [$evento->id, $encuesta->id]) }}" method="POST">
+        @csrf
+        <button class="btn btn-danger">Cerrar</button>
+      </form>
+    @endif
+
+    @if($nextEncuesta)
+      <a href="{{ route('admin.eventos.encuestas.pantalla', [$evento->id, $nextEncuesta->id]) }}" class="btn btn-outline-light">Siguiente</a>
+    @endif
+  </div>
 </div>
 
 @push('scripts')
 <script>
   const ENCUESTA_ID = {{ $encuesta->id }};
   const URL_ESTADO  = @json(route('api.encuestas.estado', $encuesta->id));
+  const ADMIN_LIVE = @json($adminLive ?? false);
 
   let prevEstado = @json($encuesta->estado);
 
@@ -490,9 +562,12 @@
   function renderEstado(data) {
     const e = data.encuesta;
     const opciones = data.opciones || [];
+    const totalVotos = data.total_votos ?? 0;
+    const adminLiveActivo = ADMIN_LIVE && e.estado === 'activa';
+    const shuffleActivo = !adminLiveActivo && e.estado === 'activa' && e.modo_resultados === 'final' && totalVotos > 0;
 
     // textos básicos
-    document.getElementById('labelTotalVotos').innerText = data.total_votos ?? 0;
+    document.getElementById('labelTotalVotos').innerText = totalVotos;
     document.getElementById('labelRonda').innerText = e.ronda_actual;
     document.getElementById('labelModo').innerText = (e.modo_resultados || '').toUpperCase();
 
@@ -503,8 +578,12 @@
 
     const labelMensaje = document.getElementById('labelMensajeEstado');
 
-    if (e.estado === 'activa' && e.modo_resultados === 'tiempo_real') {
+    if (adminLiveActivo) {
+      labelMensaje.textContent = 'Resultados en vivo (admin).';
+    } else if (e.estado === 'activa' && e.modo_resultados === 'tiempo_real') {
       labelMensaje.textContent = 'Resultados actualizándose en tiempo real.';
+    } else if (e.estado === 'activa' && e.modo_resultados === 'final') {
+      labelMensaje.textContent = 'Votación en curso. Resultados ocultos.';
     } else if (e.estado === 'activa') {
       labelMensaje.textContent = 'Mostrando participantes mientras se reciben votos…';
     } else if (e.estado === 'cerrada') {
@@ -526,8 +605,15 @@
     const idGanador = sortedByVotes[0]?.id ?? null;
 
     // Lista que se VA A MOSTRAR:
-    // ahora siempre ordenada por votos desc (no se reordenan aleatoriamente)
-    const listaMostrar = sortedByVotes;
+    // si está en modo final activo, se muestra aleatorio para ocultar tendencia
+    let listaMostrar = sortedByVotes;
+    if (shuffleActivo) {
+      listaMostrar = [...opciones];
+      for (let i = listaMostrar.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [listaMostrar[i], listaMostrar[j]] = [listaMostrar[j], listaMostrar[i]];
+      }
+    }
 
     const layout = calcularLayout(listaMostrar.length);
     const cols = layout.cols || Math.max(1, Math.ceil(listaMostrar.length / Math.max(1, layout.rows || 1)));
@@ -536,6 +622,7 @@
 
     grid.style.setProperty('--cols', cols);
     grid.dataset.size = size;
+    grid.classList.toggle('shuffle-active', shuffleActivo);
 
     const crearPlaceholder = () => {
       const ghost = document.createElement('div');
@@ -572,7 +659,7 @@
         const votos = document.createElement('div');
         votos.className = 'opcion-votos';
 
-        if (e.estado === 'cerrada' || e.modo_resultados === 'tiempo_real') {
+        if (e.estado === 'cerrada' || e.modo_resultados === 'tiempo_real' || adminLiveActivo) {
           votos.innerText = `${opt.votos} votos · ${opt.porcentaje}%`;
         } else {
           votos.innerText = 'Votación en curso…';
@@ -595,6 +682,13 @@
         badge.className = 'badge-ganador';
         badge.innerText = 'GANADOR';
         card.appendChild(badge);
+      }
+
+      if (shuffleActivo) {
+        const drift = 8 + Math.random() * 18;
+        card.style.setProperty('--drift', drift.toFixed(0) + 'px');
+        card.style.setProperty('--drift-delay', (Math.random() * 0.6).toFixed(2) + 's');
+        card.style.setProperty('--drift-duration', (2.6 + Math.random() * 2.4).toFixed(2) + 's');
       }
 
       return card;

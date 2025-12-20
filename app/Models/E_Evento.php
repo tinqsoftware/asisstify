@@ -8,7 +8,7 @@ class E_Evento extends Model
 {
     protected $table = 'E_eventos';
     protected $fillable = [
-        'entidad_id', 'titulo', 'descripcion', 'lugar', 'modalidad',
+        'entidad_id', 'titulo', 'descripcion', 'imagen_portada', 'lugar', 'modalidad',
         'enlace_virtual', 'fecha_inicio', 'fecha_fin', 'estado', 'id_user_create'
     ];
 

@@ -196,9 +196,26 @@ class E_EncuestaController extends Controller
     }
 
     // Pantalla grande con ranking / karaoke
-    public function pantalla(E_Evento $evento, E_Encuesta $encuesta)
+    public function pantalla(Request $request, E_Evento $evento, E_Encuesta $encuesta)
     {
         $encuesta->load('opciones');
-        return view('admin.encuestas.pantalla', compact('evento', 'encuesta'));
+        $adminLive = false;
+        $nextEncuesta = E_Encuesta::where('evento_id', $evento->id)
+            ->where('id', '>', $encuesta->id)
+            ->orderBy('id')
+            ->first();
+
+        if ($request->boolean('live')) {
+            $user = Auth::user();
+            if ($user) {
+                if ($user->esSuperAdmin()) {
+                    $adminLive = true;
+                } elseif ($user->tieneRolEntidad('ADMIN') && $user->adminEntidadIds()->contains($evento->entidad_id)) {
+                    $adminLive = true;
+                }
+            }
+        }
+
+        return view('admin.encuestas.pantalla', compact('evento', 'encuesta', 'adminLive', 'nextEncuesta'));
     }
 }

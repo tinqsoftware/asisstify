@@ -125,6 +125,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/eventos/{id}/dias/{dia}/actividades', [E_EventoController::class, 'actividades'])->name('admin.eventos.actividades');
     Route::post('/eventos/{id}/dias/{dia}/actividades', [E_EventoController::class, 'agregarActividad'])->name('admin.eventos.agregarActividad');
     Route::delete('/eventos/{id}/dias/{dia}/actividades/{actividad}', [E_EventoController::class, 'eliminarActividad'])->name('admin.eventos.eliminarActividad');
+    Route::get('/eventos/{evento}/actividades/{actividad}/editar', [E_EventoController::class, 'editarActividad'])->name('admin.eventos.actividades.editar');
+    Route::put('/eventos/{evento}/actividades/{actividad}', [E_EventoController::class, 'actualizarActividad'])->name('admin.eventos.actividades.actualizar');
     Route::post('/eventos/{eventoId}/confirmar', [E_EventoController::class, 'confirmar'])->name('eventos.confirmar');
 
     // Panel unificado de confirmados y asistencias
@@ -145,6 +147,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::get('{evento}/asistencias/actividad/{actividad}', [App\Http\Controllers\Admin\E_AsistenciaController::class, 'actividadCamera'])
             ->name('admin.eventos.asistencias.actividadCamera');
     });
+
+    Route::post('/actividades/{actividad}/layout', [E_AsistenciaController::class, 'guardarLayout'])
+        ->name('admin.actividades.layout');
 
 
     // ============================================
@@ -171,6 +176,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 Route::get('/rostros/{evento}', [RostroController::class, 'listar'])->name('api.rostros');
 Route::post('/marcar-asistencia', [RostroController::class, 'marcar'])->name('api.marcarAsistencia');
 Route::get('/asistencias/{actividad}', [RostroController::class, 'listarAsistencias'])->name('api.asistencias');
+Route::get('/asistencia/actividad/{actividad}/qr', [E_AsistenciaController::class, 'qrAsistencia'])->name('asistencias.qr');
 
 // ============================================
 // API ENCUESTAS (VOTO + ESTADO)

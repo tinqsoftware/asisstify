@@ -6,7 +6,7 @@
 <div class="container py-4">
   <h3 class="mb-4 fw-semibold text-dark">Editar Evento</h3>
 
-  <form action="{{ route('admin.eventos.update', $evento->id) }}" method="POST" class="card shadow-sm p-4 border-0">
+  <form action="{{ route('admin.eventos.update', $evento->id) }}" method="POST" enctype="multipart/form-data" class="card shadow-sm p-4 border-0">
     @csrf
     @method('PUT')
 
@@ -32,6 +32,20 @@
     <div class="mb-3">
       <label for="descripcion" class="form-label fw-semibold">Descripción</label>
       <textarea name="descripcion" id="descripcion" rows="3" class="form-control">{{ old('descripcion', $evento->descripcion) }}</textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="imagen_portada" class="form-label fw-semibold">Foto de portada</label>
+      <input type="file" name="imagen_portada" id="imagen_portada" class="form-control" accept="image/*">
+      @if(!empty($evento->imagen_portada))
+        <div class="mt-2">
+          <small class="text-muted">Actual:</small>
+          <div class="mt-1">
+            <img src="{{ asset('storage/' . $evento->imagen_portada) }}" alt="Portada evento" style="max-width: 260px; border-radius: 12px;">
+          </div>
+        </div>
+      @endif
+      <small class="text-muted">Recomendado: imagen horizontal (JPG o PNG).</small>
     </div>
 
     <div class="row">

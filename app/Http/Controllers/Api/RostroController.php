@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\E_RostroUsuario;
 use Carbon\Carbon;
 use App\Models\E_AsistenciaActividad;
+use App\Models\E_EventoGrupoUsuario;
 
 class RostroController extends Controller
 {
@@ -19,8 +20,11 @@ class RostroController extends Controller
             ->get()
             ->groupBy('usuario_id')
             ->map(function ($grupo) {
+                $usuario = $grupo->first()->usuario;
                 return [
-                    'nombre' => $grupo->first()->usuario->name,
+                    'usuario_id' => $usuario->id,
+                    'nombre' => $usuario->name,
+                    'sexo' => $usuario->sexo,
                     'embeddings' => $grupo->map(fn($r) => json_decode($r->embedding)),
                 ];
             })
@@ -34,10 +38,26 @@ class RostroController extends Controller
     {
         $request->validate([
             'actividad_id' => 'required|exists:E_actividades,id',
-            'nombre' => 'required|string'
+            'nombre' => 'nullable|string',
+            'usuario_id' => 'nullable|integer',
+            'tipo_documento' => 'nullable|string|max:10',
+            'nro_documento' => 'nullable|string|max:30',
+            'metodo_entrada' => 'nullable|in:rostro,documento,qr',
         ]);
 
-        $usuario = User::where('name', $request->nombre)->first();
+        $actividad = E_Actividad::with('dia')->findOrFail($request->actividad_id);
+
+        $usuario = null;
+        if ($request->filled('usuario_id')) {
+            $usuario = User::find($request->usuario_id);
+        } elseif ($request->filled('tipo_documento') && $request->filled('nro_documento')) {
+            $usuario = User::where('tipo_documento', $request->tipo_documento)
+                ->where('nro_documento', $request->nro_documento)
+                ->first();
+        } elseif ($request->filled('nombre')) {
+            $usuario = User::where('name', $request->nombre)->first();
+        }
+
         if (!$usuario) {
             return response()->json(['error' => 'Usuario no encontrado'], 404);
         }
@@ -47,19 +67,42 @@ class RostroController extends Controller
             ->where('usuario_id', $usuario->id)
             ->exists();
 
-        if ($yaExiste) {
-            return response()->json(['status' => 'ok', 'mensaje' => 'Ya marcado anteriormente']);
+        if (!$yaExiste) {
+            E_AsistenciaActividad::create([
+                'actividad_id' => $request->actividad_id,
+                'usuario_id' => $usuario->id,
+                'hora_entrada' => Carbon::now(),
+                'metodo_entrada' => $request->metodo_entrada ?: 'rostro',
+                'id_user_create' => $usuario->id,
+            ]);
         }
 
-        E_AsistenciaActividad::create([
-            'actividad_id' => $request->actividad_id,
-            'usuario_id' => $usuario->id,
-            'hora_entrada' => Carbon::now(),
-            'metodo_entrada' => 'rostro',
-            'id_user_create' => 1, // puedes usar Auth::id() si hay sesión admin
-        ]);
+        $eventoId = $actividad->dia?->evento_id;
+        $grupoNombre = null;
+        if ($eventoId) {
+            $grupo = E_EventoGrupoUsuario::where('usuario_id', $usuario->id)
+                ->whereHas('grupo', function ($q) use ($eventoId) {
+                    $q->where('evento_id', $eventoId);
+                })
+                ->with('grupo')
+                ->first();
+            $grupoNombre = $grupo?->grupo?->nombre;
+        }
 
-        return response()->json(['status' => 'ok', 'mensaje' => 'Asistencia registrada']);
+        $primerNombre = trim(explode(' ', trim($usuario->name ?? ''))[0] ?? '');
+
+        return response()->json([
+            'status' => 'ok',
+            'mensaje' => $yaExiste ? 'Ya marcado anteriormente' : 'Asistencia registrada',
+            'ya_existia' => (bool) $yaExiste,
+            'usuario' => [
+                'id' => $usuario->id,
+                'nombre' => $usuario->name,
+                'sexo' => $usuario->sexo,
+                'primer_nombre' => $primerNombre,
+                'grupo' => $grupoNombre,
+            ],
+        ]);
     }
 
     public function listarAsistencias($actividadId)
@@ -67,7 +110,10 @@ class RostroController extends Controller
         $asistencias = \App\Models\E_AsistenciaActividad::with('usuario')
             ->where('actividad_id', $actividadId)
             ->get()
-            ->map(fn($a) => $a->usuario->name);
+            ->map(fn($a) => [
+                'id' => $a->usuario?->id,
+                'nombre' => $a->usuario?->name,
+            ]);
 
         return response()->json($asistencias);
     }

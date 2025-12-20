@@ -6,7 +6,7 @@
 <div class="container py-4">
   <h3 class="mb-4 fw-semibold text-dark">Crear Nuevo Evento</h3>
 
-  <form id="formEvento" action="{{ route('admin.eventos.store') }}" method="POST" class="card shadow-sm p-4 border-0">
+  <form id="formEvento" action="{{ route('admin.eventos.store') }}" method="POST" enctype="multipart/form-data" class="card shadow-sm p-4 border-0">
     @csrf
 
     {{-- Si el usuario tiene entidades --}}
@@ -30,6 +30,12 @@
     <div class="mb-3">
       <label for="descripcion" class="form-label fw-semibold">Descripción</label>
       <textarea name="descripcion" id="descripcion" rows="3" class="form-control">{{ old('descripcion') }}</textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="imagen_portada" class="form-label fw-semibold">Foto de portada</label>
+      <input type="file" name="imagen_portada" id="imagen_portada" class="form-control" accept="image/*">
+      <small class="text-muted">Recomendado: imagen horizontal (JPG o PNG).</small>
     </div>
 
     <div class="row">

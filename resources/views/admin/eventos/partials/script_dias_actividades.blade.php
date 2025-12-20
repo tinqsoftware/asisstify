@@ -18,6 +18,8 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  const eventoId = @json(isset($evento) ? $evento->id : null);
+  const actividadEditBase = @json(url('/admin/eventos'));
   const calendarEl = document.getElementById('calendarContainer');
   const listaEl = document.getElementById('listaContainer');
   const start = document.getElementById('fecha_inicio');
@@ -247,6 +249,10 @@ document.addEventListener('DOMContentLoaded', function() {
       div.className = "mb-4";
       div.innerHTML = `<h6 class="fw-semibold text-primary mb-2">${fecha}</h6>`;
       acts.forEach(a => {
+        const editarLink = (eventoId && a.id)
+          ? `<a class="btn btn-sm btn-outline-primary ms-2" href="${actividadEditBase}/${eventoId}/actividades/${a.id}/editar">Editar actividad</a>`
+          : '';
+
         div.innerHTML += `
           <div class="border rounded p-2 mb-1 d-flex justify-content-between align-items-center actividad-list-item" data-actividad-id="${a.id}">
             <div class="actividad-list-data">
@@ -254,7 +260,10 @@ document.addEventListener('DOMContentLoaded', function() {
               <small class="text-muted">(<span class="actividad-hora-inicio">${new Date(a.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span> - <span class="actividad-hora-fin">${new Date(a.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>)</small>
               ${a.requiere_asistencia ? '<span class="badge bg-success ms-2">Asistencia</span>' : ''}
             </div>
-            <button class="btn btn-sm btn-outline-danger eliminar-actividad-btn" data-actividad-id="${a.id}"><i class='bi bi-trash'></i></button>
+            <div class="d-flex align-items-center">
+              ${editarLink}
+              <button class="btn btn-sm btn-outline-danger eliminar-actividad-btn" data-actividad-id="${a.id}"><i class='bi bi-trash'></i></button>
+            </div>
           </div>`;
       });
       listaActividades.appendChild(div);
@@ -383,4 +392,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-

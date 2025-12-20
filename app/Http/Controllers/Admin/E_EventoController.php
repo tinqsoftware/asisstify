@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\E_Evento;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class E_EventoController extends Controller
@@ -69,6 +70,7 @@ class E_EventoController extends Controller
             'modalidad' => 'required|in:presencial,virtual,híbrido',
             'fecha_inicio' => 'required|date',
             'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
+            'imagen_portada' => 'nullable|image|max:4096',
         ]);
 
         $user = Auth::user();
@@ -76,10 +78,16 @@ class E_EventoController extends Controller
             abort(403);
         }
 
+        $imagenPortada = null;
+        if ($request->hasFile('imagen_portada')) {
+            $imagenPortada = $request->file('imagen_portada')->store('eventos_portada', 'public');
+        }
+
         $evento = E_Evento::create([
             'entidad_id' => $request->entidad_id,
             'titulo' => $request->titulo,
             'descripcion' => $request->descripcion,
+            'imagen_portada' => $imagenPortada,
             'lugar' => $request->lugar,
             'modalidad' => $request->modalidad,
             'fecha_inicio' => $request->fecha_inicio,
@@ -171,6 +179,7 @@ class E_EventoController extends Controller
             'fecha_inicio' => 'required|date',
             'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
             'estado' => 'required|in:borrador,publicado,cerrado',
+            'imagen_portada' => 'nullable|image|max:4096',
         ]);
 
         $user = Auth::user();
@@ -178,7 +187,7 @@ class E_EventoController extends Controller
             abort(403);
         }
 
-        $evento->update([
+        $updates = [
             'entidad_id' => $request->entidad_id,
             'titulo' => $request->titulo,
             'descripcion' => $request->descripcion,
@@ -187,7 +196,13 @@ class E_EventoController extends Controller
             'fecha_inicio' => $request->fecha_inicio,
             'fecha_fin' => $request->fecha_fin,
             'estado' => $request->estado,
-        ]);
+        ];
+
+        if ($request->hasFile('imagen_portada')) {
+            $updates['imagen_portada'] = $request->file('imagen_portada')->store('eventos_portada', 'public');
+        }
+
+        $evento->update($updates);
 
         // Si se mandan días y actividades (editable desde el formulario)
         if ($request->filled('dias')) {
@@ -302,6 +317,65 @@ class E_EventoController extends Controller
         $grupos = \App\Models\E_GrupoEntidad::where('entidad_id', $evento->entidad_id)->get();
 
         return view('admin.eventos.actividades', compact('evento', 'dia', 'grupos'));
+    }
+
+    public function editarActividad($eventoId, $actividadId)
+    {
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
+
+        $evento = \App\Models\E_Evento::findOrFail($eventoId);
+        $this->authorizeEventoAccess($evento);
+
+        $actividad = \App\Models\E_Actividad::with('dia')->findOrFail($actividadId);
+        if ((int) $actividad->dia->evento_id !== (int) $evento->id) {
+            abort(404);
+        }
+
+        return view('admin.eventos.actividad_edit', compact('evento', 'actividad'));
+    }
+
+    public function actualizarActividad(Request $request, $eventoId, $actividadId)
+    {
+        $user = Auth::user();
+        if (!$user->esSuperAdmin() && !$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
+
+        $evento = \App\Models\E_Evento::findOrFail($eventoId);
+        $this->authorizeEventoAccess($evento);
+
+        $actividad = \App\Models\E_Actividad::with('dia')->findOrFail($actividadId);
+        if ((int) $actividad->dia->evento_id !== (int) $evento->id) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'titulo' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'imagen' => 'nullable|image|max:4096',
+            'asistencia_rostro' => 'nullable|boolean',
+            'asistencia_documento' => 'nullable|boolean',
+            'asistencia_qr' => 'nullable|boolean',
+            'mostrar_lista_asistencias' => 'nullable|boolean',
+        ]);
+
+        if ($request->hasFile('imagen')) {
+            $data['imagen'] = $request->file('imagen')->store('actividades', 'public');
+        }
+
+        $data['asistencia_rostro'] = $request->has('asistencia_rostro');
+        $data['asistencia_documento'] = $request->has('asistencia_documento');
+        $data['asistencia_qr'] = $request->has('asistencia_qr');
+        $data['mostrar_lista_asistencias'] = $request->has('mostrar_lista_asistencias');
+
+        $actividad->update($data);
+
+        return redirect()
+            ->route('admin.eventos.actividades.editar', [$evento->id, $actividad->id])
+            ->with('success', 'Actividad actualizada correctamente.');
     }
 
     public function agregarActividad(Request $request, $id, $dia)

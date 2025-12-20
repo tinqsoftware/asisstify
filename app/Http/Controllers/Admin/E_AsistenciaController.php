@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\E_Evento;
 use App\Models\E_EventoGrupoUsuario;
+use App\Models\E_Actividad;
 
 class E_AsistenciaController extends Controller
 {
@@ -43,6 +44,8 @@ class E_AsistenciaController extends Controller
     {
         $evento = \App\Models\E_Evento::findOrFail($eventoId);
         $actividad = \App\Models\E_Actividad::with('dia')->findOrFail($actividadId);
+
+        $this->authorizeActividadAccess($actividad, $evento);
         return view('admin.eventos.panel_asistencia_actividad', compact('evento', 'actividad'));
     }
 
@@ -78,6 +81,54 @@ class E_AsistenciaController extends Controller
             ->values();
 
         return view('mis_asistencias.detalle_evento', compact('evento', 'encuestas', 'user', 'gruposEvento'));
+    }
+
+    public function qrAsistencia(E_Actividad $actividad)
+    {
+        $actividad->load('dia.evento');
+        $evento = $actividad->dia?->evento;
+
+        return view('public.asistencia_qr', compact('actividad', 'evento'));
+    }
+
+    public function guardarLayout(Request $request, E_Actividad $actividad)
+    {
+        $actividad->load('dia.evento');
+        $evento = $actividad->dia?->evento;
+        if (!$evento) {
+            return response()->json(['error' => 'Actividad sin evento asociado.'], 422);
+        }
+        $this->authorizeActividadAccess($actividad, $evento);
+
+        $data = $request->validate([
+            'layout' => 'required|array',
+        ]);
+
+        $actividad->update([
+            'asistencia_layout' => $data['layout'],
+        ]);
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    private function authorizeActividadAccess(E_Actividad $actividad, E_Evento $evento)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            abort(403);
+        }
+
+        if ($user->esSuperAdmin()) {
+            return;
+        }
+
+        if (!$user->tieneRolEntidad('ADMIN')) {
+            abort(403);
+        }
+
+        if (!$user->adminEntidadIds()->contains($evento->entidad_id)) {
+            abort(403);
+        }
     }
 
 }
