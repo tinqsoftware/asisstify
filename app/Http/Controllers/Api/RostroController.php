@@ -72,8 +72,9 @@ class RostroController extends Controller
             }
             $tipoCandidates = array_values(array_unique(array_filter($tipoCandidates)));
 
+            $tipoCandidatesUpper = array_values(array_unique(array_filter(array_map('strtoupper', $tipoCandidates))));
             $usuario = User::where('nro_documento', $request->nro_documento)
-                ->whereIn('tipo_documento', $tipoCandidates)
+                ->whereIn('tipo_documento', array_merge($tipoCandidates, $tipoCandidatesUpper))
                 ->first();
         } elseif ($request->filled('nombre')) {
             $usuario = User::where('name', $request->nombre)->first();
