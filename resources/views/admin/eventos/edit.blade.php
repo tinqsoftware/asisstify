@@ -10,6 +10,20 @@
     @csrf
     @method('PUT')
 
+    @if(isset($entidades) && $entidades->count() > 0)
+      <div class="mb-3">
+        <label for="entidad_id" class="form-label fw-semibold">Entidad Asociada</label>
+        <select name="entidad_id" id="entidad_id" class="form-select">
+          <option value="">-- Seleccione una Entidad --</option>
+          @foreach($entidades as $entidad)
+            <option value="{{ $entidad->id }}" {{ (string) old('entidad_id', $evento->entidad_id) === (string) $entidad->id ? 'selected' : '' }}>
+              {{ $entidad->nombre }}
+            </option>
+          @endforeach
+        </select>
+      </div>
+    @endif
+
     <div class="mb-3">
       <label for="titulo" class="form-label fw-semibold">Título del Evento</label>
       <input type="text" name="titulo" id="titulo" class="form-control" value="{{ old('titulo', $evento->titulo) }}" required>

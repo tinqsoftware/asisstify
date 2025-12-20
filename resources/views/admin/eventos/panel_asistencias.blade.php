@@ -28,7 +28,7 @@
           <td>{{ $m['miembro'] }}</td>
           <td>{{ $m['entidad'] }}</td>
           <td>
-            <span class="badge grupo-badge">{{ $m['grupo'] }}</span>
+            <span class="badge grupo-badge" data-grupo="{{ $m['grupo'] }}">{{ $m['grupo'] }}</span>
           </td>
           <td>
             @if($m['estado'] === 'Confirmado')
@@ -62,6 +62,27 @@
 </style>
 
 <script>
+function applyGroupBadgeColors(scope) {
+  const badges = (scope || document).querySelectorAll('.grupo-badge[data-grupo]');
+  badges.forEach(badge => {
+    const group = (badge.getAttribute('data-grupo') || '').trim();
+    if (!group || group === '—') {
+      badge.style.background = '#e3e3e3';
+      badge.style.color = '#000';
+      return;
+    }
+
+    let hash = 0;
+    for (let i = 0; i < group.length; i++) {
+      hash = group.charCodeAt(i) + ((hash << 5) - hash);
+      hash |= 0;
+    }
+    const hue = Math.abs(hash) % 360;
+    badge.style.background = `hsl(${hue}, 70%, 35%)`;
+    badge.style.color = '#fff';
+  });
+}
+
 $(function () {
   const table = $('#tablaAsistencias').DataTable({
     order: [[0, 'asc']],
@@ -69,6 +90,8 @@ $(function () {
       url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
     }
   });
+
+  applyGroupBadgeColors();
 
   // refrescar automáticamente cada 15 s
   setInterval(loadLive, 15000);
@@ -91,13 +114,14 @@ $(function () {
       table.row.add([
         m.miembro,
         m.entidad,
-        `<span class="badge grupo-badge">${m.grupo}</span>`,
+        `<span class="badge grupo-badge" data-grupo="${m.grupo}">${m.grupo}</span>`,
         estadoBadge,
         m.fecha,
         m.hora
       ]);
     });
     table.draw();
+    applyGroupBadgeColors(document.getElementById('tablaAsistencias'));
   }
 });
 </script>

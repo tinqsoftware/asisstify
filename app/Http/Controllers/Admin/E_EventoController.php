@@ -110,7 +110,20 @@ class E_EventoController extends Controller
 
     public function edit($id)
     {
+        $user = Auth::user();
+
         $evento = \App\Models\E_Evento::with('dias.actividades')->findOrFail($id);
+
+        // Entidades creadas directamente por el usuario
+        $entidades = \App\Models\E_Entidad::where('id_user_create', $user->id);
+
+        // Entidades a las que pertenece el usuario mediante un grupo
+        $entidadesGrupo = \App\Models\E_Entidad::whereHas('grupos.usuarios', function ($q) use ($user) {
+            $q->where('users.id', $user->id);
+        });
+
+        // Unir ambas colecciones sin duplicados
+        $entidades = $entidades->union($entidadesGrupo)->get();
 
         // Convertimos las actividades en formato compatible con FullCalendar
         $actividades = [];
@@ -128,7 +141,7 @@ class E_EventoController extends Controller
 
         $jsonActividades = json_encode($actividades);
 
-        return view('admin.eventos.edit', compact('evento', 'jsonActividades'));
+        return view('admin.eventos.edit', compact('evento', 'jsonActividades', 'entidades'));
     }
 
     public function update(Request $request, $id)
@@ -136,6 +149,7 @@ class E_EventoController extends Controller
         $evento = E_Evento::findOrFail($id);
 
         $request->validate([
+            'entidad_id' => 'required|exists:E_entidades,id',
             'titulo' => 'required|string|max:255',
             'modalidad' => 'required|in:presencial,virtual,híbrido',
             'fecha_inicio' => 'required|date',
