@@ -91,6 +91,15 @@
       --bs-table-hover-bg: rgba(251, 191, 36, 0.08);
     }
 
+    .table th,
+    .table td {
+      color: var(--text-main);
+    }
+
+    .table thead th {
+      color: #e5e7eb;
+    }
+
     .table-light {
       --bs-table-bg: rgba(30, 41, 59, 0.75);
       --bs-table-color: var(--text-main);
@@ -102,6 +111,16 @@
 
     .table-hover > tbody > tr:hover > * {
       color: var(--text-main);
+    }
+
+    @media (max-width: 768px) {
+      .table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+      }
     }
 
     .modal-content {
