@@ -71,10 +71,15 @@
           @endforeach
         </td>
         <td>
-          <form action="{{ route('admin.eventos.eliminarActividad', [$evento->id, $dia->id, $act->id]) }}" method="POST">
-            @csrf @method('DELETE')
-            <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
-          </form>
+          <div class="d-flex gap-2">
+            <a href="{{ route('admin.eventos.actividades.editar', [$evento->id, $act->id]) }}" class="btn btn-sm btn-outline-primary">
+              Editar
+            </a>
+            <form action="{{ route('admin.eventos.eliminarActividad', [$evento->id, $dia->id, $act->id]) }}" method="POST">
+              @csrf @method('DELETE')
+              <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+            </form>
+          </div>
         </td>
       </tr>
       @endforeach
