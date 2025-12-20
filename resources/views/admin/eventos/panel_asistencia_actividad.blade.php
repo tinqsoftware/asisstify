@@ -673,12 +673,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       docEstado.textContent = 'Registrando...';
       try {
-        const resp = await registrarAsistencia({
-          actividad_id: actividadId,
-          tipo_documento: tipo,
-          nro_documento: nro,
-          metodo_entrada: 'documento'
-        });
+          const resp = await registrarAsistencia({
+            actividad_id: actividadId,
+            tipo_documento: tipo,
+            nro_documento: nro,
+            metodo_entrada: 'manual'
+          });
 
         if (resp.error) {
           docEstado.textContent = resp.error;

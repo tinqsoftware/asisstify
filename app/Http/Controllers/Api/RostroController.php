@@ -90,18 +90,23 @@ class RostroController extends Controller
             ->first();
         $yaExiste = (bool) $registroExistente;
 
+        $metodoEntrada = $request->metodo_entrada ?: 'rostro';
+        if ($metodoEntrada === 'documento') {
+            $metodoEntrada = 'manual';
+        }
+
         if (!$yaExiste) {
             E_AsistenciaActividad::create([
                 'actividad_id' => $request->actividad_id,
                 'usuario_id' => $usuario->id,
                 'hora_entrada' => Carbon::now(),
-                'metodo_entrada' => $request->metodo_entrada ?: 'rostro',
+                'metodo_entrada' => $metodoEntrada,
                 'id_user_create' => $usuario->id,
             ]);
         } elseif ($registroExistente && $registroExistente->metodo_entrada === 'confirmacion') {
             $registroExistente->update([
                 'hora_entrada' => $registroExistente->hora_entrada ?: Carbon::now(),
-                'metodo_entrada' => $request->metodo_entrada ?: 'rostro',
+                'metodo_entrada' => $metodoEntrada,
                 'id_user_create' => $usuario->id,
             ]);
         }
