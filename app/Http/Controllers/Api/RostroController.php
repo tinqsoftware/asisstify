@@ -42,7 +42,7 @@ class RostroController extends Controller
             'usuario_id' => 'nullable|integer',
             'tipo_documento' => 'nullable|string|max:10',
             'nro_documento' => 'nullable|string|max:30',
-            'metodo_entrada' => 'nullable|in:rostro,documento,qr',
+            'metodo_entrada' => 'nullable|in:rostro,documento,qr,manual,link,confirmacion',
         ]);
 
         $actividad = E_Actividad::with('dia')->findOrFail($request->actividad_id);
@@ -94,6 +94,7 @@ class RostroController extends Controller
         if ($metodoEntrada === 'documento') {
             $metodoEntrada = 'manual';
         }
+        $userCreateId = $usuario->id ?: 1;
 
         if (!$yaExiste) {
             E_AsistenciaActividad::create([
@@ -101,13 +102,13 @@ class RostroController extends Controller
                 'usuario_id' => $usuario->id,
                 'hora_entrada' => Carbon::now(),
                 'metodo_entrada' => $metodoEntrada,
-                'id_user_create' => $usuario->id,
+                'id_user_create' => $userCreateId,
             ]);
         } elseif ($registroExistente && $registroExistente->metodo_entrada === 'confirmacion') {
             $registroExistente->update([
                 'hora_entrada' => $registroExistente->hora_entrada ?: Carbon::now(),
                 'metodo_entrada' => $metodoEntrada,
-                'id_user_create' => $usuario->id,
+                'id_user_create' => $userCreateId,
             ]);
         }
 

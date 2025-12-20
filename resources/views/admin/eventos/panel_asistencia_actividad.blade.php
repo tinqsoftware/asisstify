@@ -652,11 +652,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'X-CSRF-TOKEN': @json(csrf_token()),
       },
+      credentials: 'same-origin',
       body: JSON.stringify(payload)
     });
-    return res.json();
+    const contentType = res.headers.get('content-type') || '';
+    const data = contentType.includes('application/json')
+      ? await res.json()
+      : { error: await res.text() };
+    if (!res.ok) {
+      const message = data?.message || data?.error || 'Error al registrar.';
+      throw new Error(message);
+    }
+    return data;
   }
 
   if (config.documento) {
@@ -702,7 +712,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } catch (err) {
         console.error(err);
-        docEstado.textContent = 'Error al registrar. Intenta nuevamente.';
+        docEstado.textContent = err?.message || 'Error al registrar. Intenta nuevamente.';
       }
     };
 
