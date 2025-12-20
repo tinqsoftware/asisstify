@@ -39,6 +39,20 @@ class LoginController extends Controller
         $this->middleware('guest')->except('logout');
     }
 
+    protected function redirectTo()
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return RouteServiceProvider::HOME;
+        }
+
+        if ($user->esSuperAdmin() || $user->entidades()->exists()) {
+            return '/';
+        }
+
+        return '/home';
+    }
+
     public function username()
     {
         return 'login';
