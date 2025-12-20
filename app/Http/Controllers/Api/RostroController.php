@@ -51,8 +51,29 @@ class RostroController extends Controller
         if ($request->filled('usuario_id')) {
             $usuario = User::find($request->usuario_id);
         } elseif ($request->filled('tipo_documento') && $request->filled('nro_documento')) {
-            $usuario = User::where('tipo_documento', $request->tipo_documento)
-                ->where('nro_documento', $request->nro_documento)
+            $tipoInput = trim((string) $request->tipo_documento);
+            $map = [
+                '1' => 'DNI',
+                '2' => 'CE',
+                '3' => 'PST',
+                '4' => 'RUC',
+            ];
+            $tipoCandidates = [];
+            if ($tipoInput !== '') {
+                $tipoCandidates[] = $tipoInput;
+            }
+            if (isset($map[$tipoInput])) {
+                $tipoCandidates[] = $map[$tipoInput];
+            } else {
+                $reverse = array_search(strtoupper($tipoInput), $map, true);
+                if ($reverse !== false) {
+                    $tipoCandidates[] = (string) $reverse;
+                }
+            }
+            $tipoCandidates = array_values(array_unique(array_filter($tipoCandidates)));
+
+            $usuario = User::where('nro_documento', $request->nro_documento)
+                ->whereIn('tipo_documento', $tipoCandidates)
                 ->first();
         } elseif ($request->filled('nombre')) {
             $usuario = User::where('name', $request->nombre)->first();

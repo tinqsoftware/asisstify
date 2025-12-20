@@ -301,6 +301,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   const actividadNombre = @json($actividad->titulo);
+  const eventoNombre = @json($evento->titulo);
   const actividadId = @json($actividad->id);
   const layoutUrl = @json(route('admin.actividades.layout', $actividad->id));
   const qrUrl = @json(route('asistencias.qr', $actividad->id));
@@ -507,17 +508,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   function buildGreeting(nombreCompleto, sexo, grupo) {
     const saludoBase = genderWordFor(sexo);
     const primerNombre = firstName(nombreCompleto);
-    const grupoFinal = grupo || 'sin grupo';
-    let texto = `${saludoBase} ${primerNombre} a ${actividadNombre}.`;
-    texto += ` Tu grupo es ${grupoFinal}.`;
+    let texto = `${saludoBase} ${primerNombre} a ${eventoNombre}.`;
+    if (grupo) {
+      texto += ` Tu grupo es ${grupo}.`;
+    }
     return texto;
   }
 
   function mostrarBienvenida(nombreCompleto, sexo, grupo) {
     const primer = firstName(nombreCompleto);
     bienvenidaNombre.textContent = `${genderWordFor(sexo)} ${primer}`;
-    const grupoFinal = grupo || 'Sin grupo';
-    bienvenidaGrupo.innerHTML = `Tu grupo es: <span>${grupoFinal}</span>`;
+    if (grupo) {
+      bienvenidaGrupo.innerHTML = `Tu grupo es: <span>${grupo}</span>`;
+    } else {
+      bienvenidaGrupo.textContent = '';
+    }
   }
 
   const tts = {

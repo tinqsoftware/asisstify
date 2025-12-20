@@ -325,23 +325,9 @@
 
   .panel-controles {
     position: absolute;
-    right: 22px;
+    left: 50%;
     bottom: 22px;
-    z-index: 5;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    background: rgba(15,23,42,.8);
-    border: 1px solid rgba(148,163,184,.35);
-    padding: 8px 10px;
-    border-radius: 999px;
-    backdrop-filter: blur(6px);
-  }
-
-  .panel-controles-left {
-    position: absolute;
-    left: 22px;
-    bottom: 22px;
+    transform: translateX(-50%);
     z-index: 5;
     display: flex;
     gap: 10px;
@@ -511,6 +497,10 @@
   </div>
 
   <div class="panel-controles">
+    @if($prevEncuesta)
+      <a href="{{ route('admin.eventos.encuestas.pantalla', [$evento->id, $prevEncuesta->id]) }}" class="btn btn-outline-light">Anterior</a>
+    @endif
+
     @if($encuesta->estado !== 'activa')
       <form action="{{ route('admin.eventos.encuestas.activar', [$evento->id, $encuesta->id]) }}" method="POST">
         @csrf
@@ -527,12 +517,6 @@
       <a href="{{ route('admin.eventos.encuestas.pantalla', [$evento->id, $nextEncuesta->id]) }}" class="btn btn-outline-light">Siguiente</a>
     @endif
   </div>
-
-  @if($prevEncuesta)
-    <div class="panel-controles-left">
-      <a href="{{ route('admin.eventos.encuestas.pantalla', [$evento->id, $prevEncuesta->id]) }}" class="btn btn-outline-light">Anterior</a>
-    </div>
-  @endif
 </div>
 
 @push('scripts')
