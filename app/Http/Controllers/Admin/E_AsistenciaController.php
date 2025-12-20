@@ -7,6 +7,7 @@ use App\Models\E_Encuesta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\E_Evento;
+use App\Models\E_EventoGrupoUsuario;
 
 class E_AsistenciaController extends Controller
 {
@@ -66,7 +67,17 @@ class E_AsistenciaController extends Controller
                 return $encuesta;
             });
 
-        return view('mis_asistencias.detalle_evento', compact('evento', 'encuestas', 'user'));
+        $gruposEvento = E_EventoGrupoUsuario::where('usuario_id', $user->id)
+            ->whereHas('grupo', function ($q) use ($evento) {
+                $q->where('evento_id', $evento->id);
+            })
+            ->with('grupo')
+            ->get()
+            ->pluck('grupo.nombre')
+            ->filter()
+            ->values();
+
+        return view('mis_asistencias.detalle_evento', compact('evento', 'encuestas', 'user', 'gruposEvento'));
     }
 
 }

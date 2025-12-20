@@ -31,4 +31,9 @@ class E_Evento extends Model
     {
         return $this->hasMany(E_Encuesta::class, 'evento_id');
     }
+
+    public function gruposEvento()
+    {
+        return $this->hasMany(E_EventoGrupo::class, 'evento_id');
+    }
 }

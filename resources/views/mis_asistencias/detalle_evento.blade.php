@@ -439,10 +439,10 @@
       <small>{{ strtoupper($evento->titulo) }}</small>
       <h1>Hola {{ strtoupper($user->name) }}</h1>
 
-      @if(!empty($mesa ?? null))
+      @if(!empty($gruposEvento ?? null) && $gruposEvento->isNotEmpty())
         <div class="tag-mesa">
           <span class="badge-dot"></span>
-          <span>Tu mesa es la {{ $mesa }}</span>
+          <span>Tu grupo: {{ $gruposEvento->implode(', ') }}</span>
         </div>
       @endif
 

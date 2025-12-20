@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\E_RolEntidadController;
 use App\Http\Controllers\Admin\PerfilController;
 use App\Http\Controllers\Admin\E_AsistenciaController;
 use App\Http\Controllers\Admin\E_EncuestaController;
+use App\Http\Controllers\Admin\E_EventoGrupoController;
 use App\Http\Controllers\Api\RostroController;
 use App\Http\Controllers\Api\EncuestaController as ApiEncuestaController;
 
@@ -98,6 +99,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('/eventos/{id}/editar', [E_EventoController::class, 'edit'])->name('admin.eventos.edit');
     Route::put('/eventos/{id}', [E_EventoController::class, 'update'])->name('admin.eventos.update');
     Route::post('/eventos/{id}/duplicar', [E_EventoController::class, 'duplicar'])->name('admin.eventos.duplicar');
+    Route::get('/eventos/{evento}/grupos', [E_EventoGrupoController::class, 'index'])->name('admin.eventos.grupos.index');
+    Route::post('/eventos/{evento}/grupos', [E_EventoGrupoController::class, 'store'])->name('admin.eventos.grupos.store');
+    Route::post('/eventos/{evento}/grupos/{grupo}/miembros', [E_EventoGrupoController::class, 'updateMiembros'])->name('admin.eventos.grupos.miembros.update');
 
     Route::get('/eventos/{evento}/dias', [E_EventoController::class, 'dias'])->name('admin.eventos.dias');
     Route::get('/eventos/{evento}/dias/{dia}/actividades', [E_EventoController::class, 'actividades'])->name('admin.eventos.dia.actividades');

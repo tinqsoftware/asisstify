@@ -153,6 +153,7 @@
         <td><span class="badge bg-info eventos-badge">{{ ucfirst($evento->estado) }}</span></td>
         <td class="d-flex gap-2 eventos-actions-cell">
           <a href="{{ route('admin.eventos.encuestas.index', $evento->id) }}" class="btn btn-sm btn-outline-info">Encuestas</a>
+          <a href="{{ route('admin.eventos.grupos.index', $evento->id) }}" class="btn btn-sm btn-outline-warning">Grupos</a>
           <a href="{{ route('admin.eventos.edit', $evento->id) }}" class="btn btn-sm btn-outline-light">Editar</a>
           <a href="{{ route('eventos.publico', $evento->id) }}" class="btn btn-sm btn-outline-warning" target="_blank">Compartir</a>
           <a href="{{ route('admin.eventos.asistencias.camera', $evento->id) }}" target="_blank" class="btn btn-sm btn-success">Asistencia</a>
