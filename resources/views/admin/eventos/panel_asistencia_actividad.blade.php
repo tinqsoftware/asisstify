@@ -249,10 +249,10 @@
     <div class="panel-titulo">Documento</div>
     <div class="doc-row">
       <select id="tipoDocumento">
-        <option value="DNI" selected>DNI</option>
-        <option value="CE">CE</option>
-        <option value="PST">PST</option>
-        <option value="RUC">RUC</option>
+        <option value="1" selected>DNI</option>
+        <option value="2">CE</option>
+        <option value="3">PST</option>
+        <option value="4">RUC</option>
       </select>
       <input type="text" id="nroDocumento" placeholder="Número de documento">
     </div>

@@ -51,10 +51,10 @@
 
   <div class="d-flex gap-2">
     <select id="qrTipoDoc">
-      <option value="DNI" selected>DNI</option>
-      <option value="CE">CE</option>
-      <option value="PST">PST</option>
-      <option value="RUC">RUC</option>
+      <option value="1" selected>DNI</option>
+      <option value="2">CE</option>
+      <option value="3">PST</option>
+      <option value="4">RUC</option>
     </select>
     <input type="text" id="qrNroDoc" placeholder="Numero de documento">
   </div>
