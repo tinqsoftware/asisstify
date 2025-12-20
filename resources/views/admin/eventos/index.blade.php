@@ -3,16 +3,107 @@
 @section('title', 'Eventos')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h3>Gestión de Eventos</h3>
-  <a href="{{ route('admin.eventos.create') }}" class="btn btn-primary">Nuevo Evento</a>
-</div>
+<style>
+  .eventos-shell {
+    background: rgba(15, 23, 42, 0.96);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 22px;
+    padding: 20px;
+    color: #e5e7eb;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  }
+  .eventos-title {
+    font-weight: 800;
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+  .eventos-sub {
+    color: #9ca3af;
+    font-size: .82rem;
+  }
+  .eventos-actions .btn {
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-size: .7rem;
+  }
+  .eventos-tabs .nav-link {
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    font-size: .7rem;
+    color: #9ca3af;
+    border: 1px solid transparent;
+  }
+  .eventos-tabs .nav-link.active {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #111827;
+    border-color: transparent;
+  }
+  .eventos-table {
+    border-color: rgba(148, 163, 184, 0.25);
+    color: #e5e7eb;
+  }
+  .eventos-table thead {
+    background: rgba(30, 41, 59, 0.7);
+    color: #e5e7eb;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-size: .7rem;
+  }
+  .eventos-table tbody tr {
+    background: rgba(2, 6, 23, 0.6);
+  }
+  .eventos-table td, .eventos-table th {
+    border-color: rgba(148, 163, 184, 0.2);
+    vertical-align: middle;
+  }
+  .eventos-badge {
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+  }
+  .eventos-actions-cell .btn {
+    border-radius: 999px;
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+  }
+  .pagination {
+    --bs-pagination-bg: rgba(15, 23, 42, 0.9);
+    --bs-pagination-border-color: rgba(148, 163, 184, 0.25);
+    --bs-pagination-color: #e5e7eb;
+    --bs-pagination-hover-bg: rgba(251, 191, 36, 0.18);
+    --bs-pagination-hover-color: #fef3c7;
+    --bs-pagination-active-bg: #fbbf24;
+    --bs-pagination-active-border-color: #fbbf24;
+    --bs-pagination-active-color: #111827;
+  }
+  @media (max-width: 768px) {
+    .eventos-actions {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+  }
+</style>
+
+<div class="eventos-shell">
+  <div class="d-flex justify-content-between align-items-center mb-3 eventos-actions">
+    <div>
+      <div class="eventos-title">Gestión de Eventos</div>
+      <div class="eventos-sub">Administra tus próximos eventos y asistencias.</div>
+    </div>
+    <a href="{{ route('admin.eventos.create') }}" class="btn btn-warning text-dark">Nuevo Evento</a>
+  </div>
 
 @if(session('success'))
   <div class="alert alert-success">{{ session('success') }}</div>
 @endif
 
-<ul class="nav nav-tabs mb-3">
+<ul class="nav nav-tabs mb-3 eventos-tabs">
   <li class="nav-item">
     <a class="nav-link {{ $tab === 'proximos' ? 'active' : '' }}"
       href="{{ route('admin.eventos.index', ['tab' => 'proximos']) }}">Próximos</a>
@@ -27,8 +118,8 @@
   </li>
 </ul>
 
-<table class="table table-hover align-middle">
-  <thead class="table-light">
+<table class="table table-hover align-middle eventos-table">
+  <thead>
     <tr>
       <th>Título</th>
       <th>Modalidad</th>
@@ -59,20 +150,21 @@
         </td>
         <td>{{ \Carbon\Carbon::parse($evento->fecha_inicio)->format('d/m/Y') }}</td>
         <td>{{ \Carbon\Carbon::parse($evento->fecha_fin)->format('d/m/Y') }}</td>
-        <td><span class="badge bg-info">{{ ucfirst($evento->estado) }}</span></td>
-        <td class="d-flex gap-2">
-          <a href="{{ route('admin.eventos.encuestas.index', $evento->id) }}" class="btn btn-sm btn-outline-primary">Encuestas</a>
-          <a href="{{ route('admin.eventos.edit', $evento->id) }}" class="btn btn-sm btn-outline-dark">Editar</a>
-          <a href="{{ route('eventos.publico', $evento->id) }}" class="btn btn-sm btn-outline-primary" target="_blank">Compartir</a>
+        <td><span class="badge bg-info eventos-badge">{{ ucfirst($evento->estado) }}</span></td>
+        <td class="d-flex gap-2 eventos-actions-cell">
+          <a href="{{ route('admin.eventos.encuestas.index', $evento->id) }}" class="btn btn-sm btn-outline-info">Encuestas</a>
+          <a href="{{ route('admin.eventos.edit', $evento->id) }}" class="btn btn-sm btn-outline-light">Editar</a>
+          <a href="{{ route('eventos.publico', $evento->id) }}" class="btn btn-sm btn-outline-warning" target="_blank">Compartir</a>
           <a href="{{ route('admin.eventos.asistencias.camera', $evento->id) }}" target="_blank" class="btn btn-sm btn-success">Asistencia</a>
         </td>
       </tr>
     @empty
-      <tr><td colspan="8" class="text-center">No hay eventos registrados.</td></tr>
+      <tr><td colspan="8" class="text-center text-muted">No hay eventos registrados.</td></tr>
     @endforelse
   </tbody>
 </table>
 {{ $eventos->appends(['tab' => $tab])->links() }}
+</div>
 
 <!-- Modal de asistencia -->
 <div class="modal fade" id="modalAsistencia" tabindex="-1" aria-labelledby="modalAsistenciaLabel" aria-hidden="true">
