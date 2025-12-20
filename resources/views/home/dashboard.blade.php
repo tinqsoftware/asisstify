@@ -301,7 +301,7 @@
         <div class="dash-section">
           <h4>Próximos eventos</h4>
           @forelse($adminEventos as $evento)
-            <div class="event-item">
+            <a class="event-item text-decoration-none" href="{{ route('admin.eventos.asistencias', $evento->id) }}">
               <div>
                 <div class="event-title-row">
                   <div class="fw-semibold">{{ $evento->titulo }}</div>
@@ -312,7 +312,7 @@
                 <div class="event-pill event-pill--confirmado">{{ $evento->confirmados_count }} confirmados</div>
                 <div class="event-pill event-pill--asistido">{{ $evento->asistidos_count }} asistidos</div>
               </div>
-            </div>
+            </a>
           @empty
             <div class="empty-note">No hay eventos próximos.</div>
           @endforelse
