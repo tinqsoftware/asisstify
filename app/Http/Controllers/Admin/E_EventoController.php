@@ -6,13 +6,33 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\E_Evento;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class E_EventoController extends Controller
 {
     public function index()
     {
-        $eventos = E_Evento::orderBy('created_at', 'desc')->paginate(10);
-        return view('admin.eventos.index', compact('eventos'));
+        $tab = request('tab', 'proximos');
+        $validTabs = ['proximos', 'pasados', 'todos'];
+        if (!in_array($tab, $validTabs, true)) {
+            $tab = 'proximos';
+        }
+
+        $today = Carbon::today();
+        $yesterday = Carbon::yesterday();
+
+        $query = E_Evento::with('dias.actividades.asistencias')
+            ->orderBy('created_at', 'desc');
+
+        if ($tab === 'pasados') {
+            $query->whereDate('fecha_fin', '<=', $yesterday);
+        } elseif ($tab === 'proximos') {
+            $query->whereDate('fecha_fin', '>=', $today);
+        }
+
+        $eventos = $query->paginate(10);
+
+        return view('admin.eventos.index', compact('eventos', 'tab'));
     }
 
     public function create()

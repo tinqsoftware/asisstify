@@ -12,6 +12,21 @@
   <div class="alert alert-success">{{ session('success') }}</div>
 @endif
 
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link {{ $tab === 'proximos' ? 'active' : '' }}"
+      href="{{ route('admin.eventos.index', ['tab' => 'proximos']) }}">Próximos</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {{ $tab === 'pasados' ? 'active' : '' }}"
+      href="{{ route('admin.eventos.index', ['tab' => 'pasados']) }}">Pasados</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {{ $tab === 'todos' ? 'active' : '' }}"
+      href="{{ route('admin.eventos.index', ['tab' => 'todos']) }}">Todos</a>
+  </li>
+</ul>
+
 <table class="table table-hover align-middle">
   <thead class="table-light">
     <tr>
@@ -57,7 +72,7 @@
     @endforelse
   </tbody>
 </table>
-{{ $eventos->links() }}
+{{ $eventos->appends(['tab' => $tab])->links() }}
 
 <!-- Modal de asistencia -->
 <div class="modal fade" id="modalAsistencia" tabindex="-1" aria-labelledby="modalAsistenciaLabel" aria-hidden="true">

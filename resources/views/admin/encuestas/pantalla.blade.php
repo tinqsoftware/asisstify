@@ -117,26 +117,58 @@
     margin-top: 18px;
     margin-bottom: 18px;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
   }
 
   .opciones-grid {
-    display: flex;
-    gap: 24px;
+    --cols: 4;
+    --gap: 12px;
+    --card-min: 180px;
+    --card-max: 220px;
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(var(--card-min), var(--card-max)));
+    gap: var(--gap);
     justify-content: center;
-    align-items: flex-end;
-    flex-wrap: nowrap;
-    max-width: 100%;
+    align-content: start;
+    justify-items: center;
+    width: 100%;
+    padding: 6px 0 2px;
+  }
+
+  .opciones-grid[data-size="xl"] {
+    --card-min: 220px;
+    --card-max: 260px;
+    --gap: 16px;
+  }
+
+  .opciones-grid[data-size="lg"] {
+    --card-min: 200px;
+    --card-max: 240px;
+    --gap: 14px;
+  }
+
+  .opciones-grid[data-size="md"] {
+    --card-min: 170px;
+    --card-max: 200px;
+    --gap: 12px;
+  }
+
+  .opciones-grid[data-size="sm"] {
+    --card-min: 150px;
+    --card-max: 180px;
+    --gap: 10px;
   }
 
   .opcion-card {
     background: radial-gradient(circle at top, rgba(15,23,42,1), rgba(15,23,42,.9));
     border-radius: 28px;
-    padding: 18px 22px 20px;
+    padding: 12px 14px 16px;
     text-align: center;
-    min-width: 190px;
-    max-width: 240px;
+    width: clamp(var(--card-min), 95%, var(--card-max));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     transition: all .28s ease;
     box-shadow: 0 12px 30px rgba(0,0,0,.7);
     border: 1px solid rgba(148,163,184,.4);
@@ -164,51 +196,38 @@
       0 0 0 2px rgba(251,191,36,.4);
   }
 
+  .opcion-card--placeholder {
+    visibility: hidden;
+    pointer-events: none;
+    box-shadow: none;
+    border: none;
+  }
+
+  .opcion-img {
+    width: min(140px, 82%);
+    aspect-ratio: 1 / 1;
+    border-radius: 20px;
+    object-fit: cover;
+    margin: 0 auto .7rem;
+    background: #020617;
+    border: 1px solid rgba(55,65,81,.8);
+  }
+
   .opcion-nombre {
     font-size: 1.15rem;
     font-weight: 700;
-    margin-bottom: .45rem;
+    margin-bottom: .5rem;
+    line-height: 1.2;
+    min-height: 2.4em;
   }
-
-  /* OPCIONES PANTALLA — aumento del tamaño en ~35% */
-  .opcion-img {
-      width: 200px; /* antes 150 */
-      height: 200px; /* antes 150 */
-      border-radius: 28px;
-      object-fit: cover;
-      margin-bottom: 1rem; /* un poco más de aire */
-      background: #020617;
-      border: 1px solid rgba(55,65,81,.8);
-  }
-
-  .opcion-nombre {
-      font-size: 1.55rem; /* antes 1.15rem */
-      font-weight: 700;
-      margin-bottom: .6rem;
-  }
-
-  .opcion-votos {
-      font-size: 1.15rem; /* antes .95rem */
-      opacity: .95;
-  }
-
-  .opcion-card {
-      padding: 24px 26px 28px; /* antes 18px 22px 20px */
-      min-width: 230px;        /* antes 190 */
-      max-width: 300px;        /* antes 240 */
-  }
-
-  .opcion-bar-wrapper {
-    height: 22px; /* antes 16px */
-  } 
 
   .opcion-bar-wrapper {
     width: 100%;
-    height: 16px;
+    height: 12px;
     border-radius: 999px;
     background: #020617;
     overflow: hidden;
-    margin-bottom: .4rem;
+    margin-bottom: .3rem;
     border: 1px solid rgba(31,41,55,1);
   }
   .opcion-bar-fill {
@@ -220,7 +239,7 @@
   }
 
   .opcion-votos {
-    font-size: .95rem;
+    font-size: 1rem;
     opacity: .9;
   }
 
@@ -379,12 +398,14 @@
       letter-spacing: .10em;
     }
     .opciones-grid {
-      gap: 14px;
-      flex-wrap: wrap;
+      gap: 12px;
+      grid-template-rows: auto;
+      --cols: 2;
     }
     .opcion-card {
-      min-width: 150px;
+      min-width: 140px;
       max-width: 190px;
+      padding: 12px 12px 16px;
     }
     .zona-bottom {
       flex-direction: column;
@@ -446,6 +467,37 @@
   let pollingId = null;
   let animacionGanadorHecha = false;
 
+  function calcularLayout(total) {
+    if (total <= 0) return { rows: 0, cols: 0 };
+    if (total <= 6) return { rows: 1, cols: total, size: 'xl' };
+
+    const ancho = grid.clientWidth || window.innerWidth || 1280;
+    const gap = 12;
+    const minCard = 190;
+    const maxColsByWidth = Math.max(3, Math.min(12, Math.floor((ancho + gap) / (minCard + gap))));
+
+    if (total <= 20) {
+      const cols = Math.min(10, Math.max(3, Math.ceil(total / 2), Math.min(maxColsByWidth, 6)));
+      return { rows: 2, cols, size: 'lg' };
+    }
+
+    let cols = Math.min(10, Math.max(4, Math.ceil(total / 3)));
+    cols = Math.min(cols, maxColsByWidth);
+    let rows = Math.ceil(total / cols);
+    rows = Math.min(3, Math.max(2, rows));
+
+    if (rows * cols < total) {
+      cols = Math.min(10, Math.ceil(total / rows));
+      cols = Math.min(cols, maxColsByWidth);
+      rows = Math.ceil(total / cols);
+      rows = Math.min(3, Math.max(2, rows));
+    }
+
+    const size = rows === 2 ? 'lg' : 'md';
+
+    return { rows, cols, size };
+  }
+
   function lanzarConfetti() {
     confettiContainer.innerHTML = '';
     const colores = ['#facc15','#fbbf24','#eab308','#a855f7','#38bdf8'];
@@ -506,8 +558,21 @@
     // ahora siempre ordenada por votos desc (no se reordenan aleatoriamente)
     const listaMostrar = sortedByVotes;
 
-    // Pintamos tarjetas
-    listaMostrar.forEach((opt) => {
+    const layout = calcularLayout(listaMostrar.length);
+    const cols = layout.cols || Math.max(1, Math.ceil(listaMostrar.length / Math.max(1, layout.rows || 1)));
+    const rows = layout.rows || Math.max(1, Math.ceil(listaMostrar.length / cols));
+    const size = layout.size || (rows === 1 ? 'xl' : rows === 2 ? 'lg' : 'md');
+
+    grid.style.setProperty('--cols', cols);
+    grid.dataset.size = size;
+
+    const crearPlaceholder = () => {
+      const ghost = document.createElement('div');
+      ghost.className = 'opcion-card opcion-card--placeholder';
+      return ghost;
+    };
+
+    const cards = listaMostrar.map((opt) => {
       const card = document.createElement('div');
       card.className = 'opcion-card';
       card.dataset.opcionId = opt.id;
@@ -523,27 +588,27 @@
       img.alt = opt.nombre;
       card.appendChild(img);
 
-      const barWrap = document.createElement('div');
-      barWrap.className = 'opcion-bar-wrapper';
-      const barFill = document.createElement('div');
-      barFill.className = 'opcion-bar-fill';
-      const ancho = (maxVotos > 0) ? (opt.votos * 100 / maxVotos) : 0;
-      barFill.style.width = ancho.toFixed(1) + '%';
-      barWrap.appendChild(barFill);
-      card.appendChild(barWrap);
+      if (!e.unica_por_opcion) {
+        const barWrap = document.createElement('div');
+        barWrap.className = 'opcion-bar-wrapper';
+        const barFill = document.createElement('div');
+        barFill.className = 'opcion-bar-fill';
+        const ancho = (maxVotos > 0) ? (opt.votos * 100 / maxVotos) : 0;
+        barFill.style.width = ancho.toFixed(1) + '%';
+        barWrap.appendChild(barFill);
+        card.appendChild(barWrap);
 
-      const votos = document.createElement('div');
-      votos.className = 'opcion-votos';
+        const votos = document.createElement('div');
+        votos.className = 'opcion-votos';
 
-      if (e.estado === 'cerrada' || e.modo_resultados === 'tiempo_real') {
-        votos.innerText = `${opt.votos} votos · ${opt.porcentaje}%`;
-      } else {
-        votos.innerText = 'Votación en curso…';
+        if (e.estado === 'cerrada' || e.modo_resultados === 'tiempo_real') {
+          votos.innerText = `${opt.votos} votos · ${opt.porcentaje}%`;
+        } else {
+          votos.innerText = 'Votación en curso…';
+        }
+        card.appendChild(votos);
       }
-      card.appendChild(votos);
 
-      // Si es encuesta tipo "un usuario por opción" (karaoke),
-      // mostramos quién tomó esa opción como un ticket elegante
       if (e.unica_por_opcion && opt.tomado_por) {
         const ticket = document.createElement('div');
         ticket.className = 'opcion-ticket';
@@ -554,7 +619,6 @@
         card.appendChild(ticket);
       }
 
-      // SOLO cuando esté cerrada y NO sea karaoke marcamos GANADOR (badge)
       if (!e.unica_por_opcion && e.estado === 'cerrada' && idGanador && opt.id === idGanador) {
         const badge = document.createElement('div');
         badge.className = 'badge-ganador';
@@ -562,8 +626,29 @@
         card.appendChild(badge);
       }
 
-      grid.appendChild(card);
+      return card;
     });
+
+    const fullRows = Math.floor(cards.length / cols);
+    const lastCount = cards.length % cols;
+    const padTotal = lastCount ? (cols - lastCount) : 0;
+    const startPad = lastCount ? Math.ceil(padTotal / 2) : 0;
+    const endPad = lastCount ? padTotal - startPad : 0;
+
+    let idx = 0;
+    for (let r = 0; r < rows; r++) {
+      if (r < fullRows) {
+        for (let c = 0; c < cols; c++) {
+          grid.appendChild(cards[idx++]);
+        }
+      } else if (lastCount && r === fullRows) {
+        for (let i = 0; i < startPad; i++) grid.appendChild(crearPlaceholder());
+        for (let c = 0; c < lastCount; c++) grid.appendChild(cards[idx++]);
+        for (let i = 0; i < endPad; i++) grid.appendChild(crearPlaceholder());
+      } else {
+        for (let c = 0; c < cols; c++) grid.appendChild(crearPlaceholder());
+      }
+    }
 
     // Si acaba de pasar de cualquier estado a CERRADA
     // → animación especial SOLO si NO es encuesta karaoke (unica_por_opcion = false)
@@ -578,7 +663,8 @@
       // Animación de carta ganadora
       if (idGanador) {
         const ganadorCard = grid.querySelector('[data-opcion-id="' + idGanador + '"]');
-        const todas = Array.from(grid.querySelectorAll('.opcion-card'));
+        const todas = Array.from(grid.querySelectorAll('.opcion-card'))
+          .filter(c => !c.classList.contains('opcion-card--placeholder'));
 
         if (ganadorCard) {
           todas.forEach(c => { if (c !== ganadorCard) c.classList.add('opcion-card--dim'); });
@@ -607,8 +693,8 @@
               const rankClass = 'opcion-card--rank' + (index + 1);
               card.classList.add(rankClass);
 
-              grid.appendChild(card);
-            });
+          grid.appendChild(card);
+        });
 
             animacionGanadorHecha = true;
           }, { once: true });
