@@ -463,6 +463,20 @@
     60% { transform: translateY(-18px) scale(1.34); }
     100% { transform: translateY(-10px) scale(1.22); }
   }
+
+  .opciones-grid.winner-only .opcion-card.winner-spotlight {
+    box-shadow:
+      0 30px 70px rgba(0,0,0,.9),
+      0 0 0 2px rgba(251,191,36,.45),
+      0 0 35px rgba(251,191,36,.55);
+    animation: winnerGlow 2.8s ease-in-out infinite;
+  }
+
+  @keyframes winnerGlow {
+    0% { filter: drop-shadow(0 0 0 rgba(251,191,36,.15)); }
+    50% { filter: drop-shadow(0 0 14px rgba(251,191,36,.5)); }
+    100% { filter: drop-shadow(0 0 0 rgba(251,191,36,.15)); }
+  }
  
 
   /* CONFETTI */
@@ -614,10 +628,9 @@
     return { rows, cols, size: 'sm' };
   }
 
-  function lanzarConfetti() {
+  function lanzarConfetti(piezas = 140) {
     confettiContainer.innerHTML = '';
     const colores = ['#facc15','#fbbf24','#f59e0b','#eab308','#fcd34d'];
-    const piezas = 120;
 
     for (let i = 0; i < piezas; i++) {
       const el = document.createElement('div');
@@ -859,15 +872,17 @@
           if (pollingId) {
             clearInterval(pollingId);
           }
-          lanzarConfetti();
+          lanzarConfetti(200);
           ganadorCard.classList.add('winner-reveal');
           ganadorCard.addEventListener('animationend', () => {
             ganadorCard.classList.remove('winner-reveal');
             ganadorCard.classList.add('winner-float');
+            ganadorCard.classList.add('winner-spotlight');
             animacionGanadorHecha = true;
           }, { once: true });
         } else {
           ganadorCard.classList.add('winner-float');
+          ganadorCard.classList.add('winner-spotlight');
         }
       }
     }
