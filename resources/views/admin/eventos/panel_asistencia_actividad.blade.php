@@ -203,6 +203,13 @@
   .panel-bienvenida {
     text-align: center;
     min-width: 260px;
+    padding: 12px 16px;
+    height: auto;
+  }
+
+  .panel-bienvenida .bienvenida-nombre,
+  .panel-bienvenida .bienvenida-grupo {
+    margin: 0;
   }
 
   .panel-bienvenida .bienvenida-nombre {

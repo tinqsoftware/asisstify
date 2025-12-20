@@ -271,17 +271,34 @@
     color: #dbeafe;
   }
 
-  /* PANEL ENCUESTA */
-  .encuesta-panel {
-    margin-top: 4px;
-    border-radius: 22px;
+  /* MODAL ENCUESTA */
+  .encuesta-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    z-index: 9999;
+    backdrop-filter: blur(6px);
+  }
+
+  .encuesta-modal {
+    width: 100%;
+    max-width: 720px;
+    max-height: 86vh;
+    border-radius: 24px;
     background: linear-gradient(145deg, rgba(15,23,42,.98), rgba(17,24,39, .96));
-    padding: 16px 14px 18px;
     border: 1px solid rgba(148, 163, 184, 0.35);
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 60px rgba(2, 6, 23, .55);
   }
-  .encuesta-panel::before {
+
+  .encuesta-modal::before {
     content:'';
     position:absolute;
     inset:-80px auto auto -80px;
@@ -290,6 +307,44 @@
     background: radial-gradient(circle, var(--accent-soft), transparent 70%);
     opacity:.9;
     pointer-events:none;
+  }
+
+  .encuesta-modal-header {
+    padding: 18px 22px 0;
+  }
+
+  .encuesta-modal-body {
+    padding: 0 22px 6px;
+    overflow-y: auto;
+  }
+
+  .encuesta-modal-footer {
+    padding: 10px 22px 20px;
+  }
+
+  .encuesta-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, .35);
+    background: rgba(15, 23, 42, .85);
+    color: #e5e7eb;
+    font-size: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s ease-out;
+  }
+  .encuesta-modal-close:hover {
+    border-color: rgba(251, 191, 36, .55);
+    color: #facc15;
+  }
+
+  body.modal-open {
+    overflow: hidden;
   }
 
   .encuesta-panel-title {
@@ -311,6 +366,26 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+  }
+
+  .encuesta-opciones--dos-columnas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .encuesta-opciones--dos-columnas .opcion-img {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  .encuesta-opciones--dos-columnas .opcion-name {
+    font-size: .98rem;
+  }
+
+  .encuesta-opciones--dos-columnas .opcion-sub {
+    font-size: .74rem;
   }
 
   .opcion-btn {
@@ -485,15 +560,26 @@
           {{-- Aquí se inyectan dinámicamente los botones de encuestas --}}
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <div id="encuestaPanel" class="encuesta-panel" style="display:none;">
-        <div class="encuesta-panel-title" id="encuestaPanelTitle"></div>
-        <p class="texto-estado" id="encuestaPanelEstado"></p>
-        <div class="encuesta-opciones" id="encuestaOpciones"></div>
-        <button id="btnConfirmarRespuesta" class="btn-confirmar" disabled>
-          Confirmar respuesta
-        </button>
-      </div>
+<div id="encuestaModalOverlay" class="encuesta-modal-overlay" style="display:none;">
+  <div class="encuesta-modal" role="dialog" aria-modal="true" aria-labelledby="encuestaPanelTitle">
+    <button id="encuestaModalClose" type="button" class="encuesta-modal-close" aria-label="Cerrar">
+      &times;
+    </button>
+    <div class="encuesta-modal-header">
+      <div class="encuesta-panel-title" id="encuestaPanelTitle"></div>
+      <p class="texto-estado" id="encuestaPanelEstado"></p>
+    </div>
+    <div class="encuesta-modal-body">
+      <div class="encuesta-opciones" id="encuestaOpciones"></div>
+    </div>
+    <div class="encuesta-modal-footer">
+      <button id="btnConfirmarRespuesta" class="btn-confirmar" disabled>
+        Confirmar respuesta
+      </button>
     </div>
   </div>
 </div>
@@ -511,7 +597,8 @@
   let opcionSeleccionada = null;
 
   const encuestasListSection = document.getElementById('encuestasListSection');
-  const encuestaPanel = document.getElementById('encuestaPanel');
+  const encuestaModalOverlay = document.getElementById('encuestaModalOverlay');
+  const encuestaModalClose = document.getElementById('encuestaModalClose');
   const encuestaPanelTitle = document.getElementById('encuestaPanelTitle');
   const encuestaPanelEstado = document.getElementById('encuestaPanelEstado');
   const encuestaOpciones = document.getElementById('encuestaOpciones');
@@ -536,6 +623,18 @@
     if (enc.estado === 'activa') return 'btn-pill-status btn-pill-status--activa';
     if (enc.estado === 'cerrada') return 'btn-pill-status btn-pill-status--cerrada';
     return 'btn-pill-status btn-pill-status--proximamente';
+  }
+
+  function openEncuestaModal() {
+    encuestaModalOverlay.style.display = 'flex';
+    document.body.classList.add('modal-open');
+  }
+
+  function closeEncuestaModal() {
+    encuestaModalOverlay.style.display = 'none';
+    document.body.classList.remove('modal-open');
+    encuestaActual = null;
+    opcionSeleccionada = null;
   }
 
   function renderButtons() {
@@ -583,7 +682,6 @@
     encuestaActual = enc;
     opcionSeleccionada = null;
 
-    encuestaPanel.style.display = 'block';
     encuestaPanelTitle.innerText = enc.nombre.toUpperCase();
 
     let modoTxt = '';
@@ -598,11 +696,16 @@
     encuestaPanelEstado.innerText = modoTxt;
 
     renderOpciones(enc);
+    openEncuestaModal();
   }
 
   function renderOpciones(enc) {
     encuestaOpciones.innerHTML = '';
     btnConfirmarRespuesta.disabled = true;
+    encuestaOpciones.classList.toggle(
+      'encuesta-opciones--dos-columnas',
+      (enc.opciones || []).length >= 20
+    );
 
     const votosUsuario = (enc.votos_usuario || []).map(Number);
 
@@ -663,11 +766,9 @@
         if (encActualizada && encActualizada.estado === 'activa') {
           // sigue activa → refrescamos datos (opciones bloqueadas, etc.)
           abrirEncuesta(encActualizada);
-        } else if (encuestaPanel.style.display !== 'none') {
+        } else if (encuestaModalOverlay.style.display !== 'none') {
           // la encuesta ya no está activa o desapareció → cerramos panel SIEMPRE
-          encuestaPanel.style.display = 'none';
-          encuestaActual = null;
-          opcionSeleccionada = null;
+          closeEncuestaModal();
 
           // solo mostramos toast cuando NO es modo silencioso
           if (!quiet) {
@@ -719,6 +820,14 @@
       btnConfirmarRespuesta.disabled = false;
     }
   });
+
+  encuestaModalOverlay.addEventListener('click', (event) => {
+    if (event.target === encuestaModalOverlay) {
+      closeEncuestaModal();
+    }
+  });
+
+  encuestaModalClose.addEventListener('click', closeEncuestaModal);
 
   document.addEventListener('DOMContentLoaded', () => {
     cargarEncuestas();
