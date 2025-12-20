@@ -4,11 +4,26 @@
 
 @section('content')
 <style>
+  body {
+    overflow: hidden;
+  }
+
+  .event-app-header {
+    display: none;
+  }
+
+  .event-app-wrapper {
+    padding: 0;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
   .asistencia-stage {
     position: relative;
-    width: 100%;
-    min-height: calc(100vh - 120px);
-    border-radius: 28px;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
     overflow: hidden;
     box-shadow: 0 30px 80px rgba(0,0,0,.55);
   }
@@ -224,7 +239,7 @@
 
   @media (max-width: 768px) {
     .asistencia-stage {
-      min-height: 75vh;
+      height: 100vh;
     }
   }
 </style>

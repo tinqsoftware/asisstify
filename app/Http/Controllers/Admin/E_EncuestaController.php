@@ -204,6 +204,10 @@ class E_EncuestaController extends Controller
             ->where('id', '>', $encuesta->id)
             ->orderBy('id')
             ->first();
+        $prevEncuesta = E_Encuesta::where('evento_id', $evento->id)
+            ->where('id', '<', $encuesta->id)
+            ->orderBy('id', 'desc')
+            ->first();
 
         if ($request->boolean('live')) {
             $user = Auth::user();
@@ -216,6 +220,6 @@ class E_EncuestaController extends Controller
             }
         }
 
-        return view('admin.encuestas.pantalla', compact('evento', 'encuesta', 'adminLive', 'nextEncuesta'));
+        return view('admin.encuestas.pantalla', compact('evento', 'encuesta', 'adminLive', 'nextEncuesta', 'prevEncuesta'));
     }
 }
