@@ -201,6 +201,9 @@
             </div>
           </div>
         @endif
+        @if(Auth::user()->grupos()->exists())
+          <a href="{{ route('admin.grupos.index') }}">Grupos</a>
+        @endif
         <a href="{{ route('mis.asistencias') }}">Mis Asistencias</a>
         <div class="event-app-dropdown" data-dropdown>
           <button type="button" class="event-app-toggle" data-dropdown-toggle>
@@ -234,6 +237,10 @@
               @if(Auth::user()->esSuperAdmin())
                 <a href="{{ route('admin.entidades.index') }}">Entidades</a>
               @endif
+              <div class="event-app-divider"></div>
+            @endif
+            @if(Auth::user()->grupos()->exists())
+              <a href="{{ route('admin.grupos.index') }}">Mis Grupos</a>
               <div class="event-app-divider"></div>
             @endif
             <a href="{{ route('mis.asistencias') }}">Mis Asistencias</a>

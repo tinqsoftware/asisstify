@@ -25,7 +25,7 @@ use App\Http\Controllers\Api\EncuestaController as ApiEncuestaController;
 |
 */
 
-Route::get('/', [Eventos::class, 'welcome']);
+Route::get('/', [App\Http\Controllers\DashboardController::class, 'index']);
 
 Auth::routes();
 
