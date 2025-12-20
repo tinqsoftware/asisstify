@@ -177,7 +177,7 @@
   }
 
   .opciones-grid.shuffle-active .opcion-card {
-    animation: shuffleDrift var(--drift-duration, 3.2s) ease-in-out infinite;
+    animation: shuffleDrift var(--drift-duration, 7.2s) cubic-bezier(0.45, 0, 0.55, 1) infinite;
     animation-delay: var(--drift-delay, 0s);
     will-change: transform;
   }
@@ -256,6 +256,14 @@
   .opcion-votos {
     font-size: 1rem;
     opacity: .9;
+  }
+
+  .opcion-porcentaje {
+    margin-top: .6rem;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #facc15;
+    letter-spacing: .08em;
   }
 
   .opcion-ticket {
@@ -352,6 +360,22 @@
     padding: .35rem .8rem;
   }
 
+  .btn-ranking-toggle {
+    border-radius: 999px;
+    border: 1px solid rgba(148,163,184,.5);
+    background: rgba(15,23,42,.85);
+    color: #e2e8f0;
+    padding: .45rem 1rem;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    transition: all .2s ease;
+  }
+  .btn-ranking-toggle:hover {
+    border-color: rgba(251,191,36,.6);
+    color: #facc15;
+  }
+
 
     /* ANIMACIÓN GANADOR FINAL */
   .opcion-card--dim {
@@ -401,6 +425,22 @@
   .opcion-card--rank6 {
     transform: translateY(4px) scale(.94);
     opacity: .92;
+  }
+
+  .opciones-grid.winner-only {
+    --cols: 1;
+    justify-items: center;
+    align-content: center;
+  }
+
+  .opciones-grid.winner-only .opcion-card {
+    max-width: 520px;
+    min-height: 380px;
+    transform: translateY(-10px) scale(1.22);
+    border-color: rgba(251,191,36,.9);
+    box-shadow:
+      0 22px 50px rgba(0,0,0,.9),
+      0 0 0 2px rgba(251,191,36,.45);
   }
  
 
@@ -490,6 +530,9 @@
     <div class="total-votos">
       Total de votos: <strong id="labelTotalVotos">0</strong>
     </div>
+    <button id="btnRankingToggle" class="btn-ranking-toggle" style="display:none;" type="button">
+      Mostrar ranking
+    </button>
     <div class="estado-mensaje">
       <span class="label">Estado de pantalla</span>
       <span id="labelMensajeEstado">Esperando resultados…</span>
@@ -530,9 +573,12 @@
   const pantallaWrap = document.getElementById('pantallaWrap');
   const confettiContainer = document.getElementById('confettiContainer');
   const grid = document.getElementById('gridOpciones');
+  const btnRankingToggle = document.getElementById('btnRankingToggle');
 
   let pollingId = null;
   let animacionGanadorHecha = false;
+  let rankingVisible = false;
+  let shuffleOrderIds = null;
 
   function calcularLayout(total) {
     if (total <= 0) return { rows: 0, cols: 0 };
@@ -548,7 +594,7 @@
 
   function lanzarConfetti() {
     confettiContainer.innerHTML = '';
-    const colores = ['#facc15','#fbbf24','#eab308','#a855f7','#38bdf8'];
+    const colores = ['#facc15','#fbbf24','#f59e0b','#eab308','#fcd34d'];
     const piezas = 120;
 
     for (let i = 0; i < piezas; i++) {
@@ -569,7 +615,8 @@
     const opciones = data.opciones || [];
     const totalVotos = data.total_votos ?? 0;
     const adminLiveActivo = ADMIN_LIVE && e.estado === 'activa';
-    const shuffleActivo = !adminLiveActivo && e.estado === 'activa' && e.modo_resultados === 'final' && totalVotos > 0;
+    const shuffleActivo = !adminLiveActivo && e.estado === 'activa';
+    const showRankingToggle = !e.unica_por_opcion && e.estado === 'cerrada';
 
     // textos básicos
     document.getElementById('labelTotalVotos').innerText = totalVotos;
@@ -613,11 +660,25 @@
     // si está en modo final activo, se muestra aleatorio para ocultar tendencia
     let listaMostrar = sortedByVotes;
     if (shuffleActivo) {
-      listaMostrar = [...opciones];
-      for (let i = listaMostrar.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [listaMostrar[i], listaMostrar[j]] = [listaMostrar[j], listaMostrar[i]];
+      const idsActuales = opciones.map(o => o.id);
+      const mismoSet = shuffleOrderIds
+        && shuffleOrderIds.length === idsActuales.length
+        && idsActuales.every(id => shuffleOrderIds.includes(id));
+
+      if (!mismoSet) {
+        shuffleOrderIds = [...idsActuales].sort(() => Math.random() - 0.5);
       }
+
+      listaMostrar = shuffleOrderIds
+        .map(id => opciones.find(o => o.id === id))
+        .filter(Boolean);
+    } else {
+      shuffleOrderIds = null;
+    }
+
+    const winnerOnly = showRankingToggle && !rankingVisible && idGanador;
+    if (winnerOnly) {
+      listaMostrar = sortedByVotes.filter(opt => opt.id === idGanador);
     }
 
     const layout = calcularLayout(listaMostrar.length);
@@ -628,6 +689,15 @@
     grid.style.setProperty('--cols', cols);
     grid.dataset.size = size;
     grid.classList.toggle('shuffle-active', shuffleActivo);
+    grid.classList.toggle('winner-only', winnerOnly);
+
+    if (showRankingToggle) {
+      btnRankingToggle.style.display = 'inline-flex';
+      btnRankingToggle.textContent = rankingVisible ? 'Ocultar ranking' : 'Mostrar ranking';
+    } else {
+      btnRankingToggle.style.display = 'none';
+      rankingVisible = false;
+    }
 
     const crearPlaceholder = () => {
       const ghost = document.createElement('div');
@@ -651,7 +721,7 @@
       img.alt = opt.nombre;
       card.appendChild(img);
 
-      if (!e.unica_por_opcion) {
+      if (!e.unica_por_opcion && e.estado === 'cerrada' && !winnerOnly) {
         const barWrap = document.createElement('div');
         barWrap.className = 'opcion-bar-wrapper';
         const barFill = document.createElement('div');
@@ -664,7 +734,7 @@
         const votos = document.createElement('div');
         votos.className = 'opcion-votos';
 
-        if (e.estado === 'cerrada' || e.modo_resultados === 'tiempo_real' || adminLiveActivo) {
+        if (e.estado === 'cerrada' || adminLiveActivo) {
           votos.innerText = `${opt.votos} votos · ${opt.porcentaje}%`;
         } else {
           votos.innerText = 'Votación en curso…';
@@ -677,7 +747,7 @@
         ticket.className = 'opcion-ticket';
         ticket.innerHTML = `
           <span class="opcion-ticket-dot"></span>
-          <span>TOMADO POR&nbsp;${opt.tomado_por.toUpperCase()}</span>
+          <span>${opt.tomado_por}</span>
         `;
         card.appendChild(ticket);
       }
@@ -689,11 +759,18 @@
         card.appendChild(badge);
       }
 
+      if (winnerOnly) {
+        const porcentaje = document.createElement('div');
+        porcentaje.className = 'opcion-porcentaje';
+        porcentaje.innerText = `${opt.porcentaje}%`;
+        card.appendChild(porcentaje);
+      }
+
       if (shuffleActivo) {
         const drift = 8 + Math.random() * 18;
         card.style.setProperty('--drift', drift.toFixed(0) + 'px');
         card.style.setProperty('--drift-delay', (Math.random() * 0.6).toFixed(2) + 's');
-        card.style.setProperty('--drift-duration', (2.6 + Math.random() * 2.4).toFixed(2) + 's');
+        card.style.setProperty('--drift-duration', (6.2 + Math.random() * 3.2).toFixed(2) + 's');
       }
 
       return card;
@@ -744,28 +821,6 @@
             // Volvemos a mostrar todas sin blur
             todas.forEach(c => c.classList.remove('opcion-card--dim'));
             ganadorCard.classList.remove('opcion-card--anim-win');
-
-            // Reordenamos visualmente según ranking real y aplicamos tamaños finales
-            grid.innerHTML = '';
-            sortedByVotes.forEach((opt, index) => {
-              const card = todas.find(c => c.dataset.opcionId == opt.id);
-              if (!card) return;
-
-              card.classList.remove(
-                'opcion-card--rank1',
-                'opcion-card--rank2',
-                'opcion-card--rank3',
-                'opcion-card--rank4',
-                'opcion-card--rank5',
-                'opcion-card--rank6'
-              );
-
-              const rankClass = 'opcion-card--rank' + (index + 1);
-              card.classList.add(rankClass);
-
-          grid.appendChild(card);
-        });
-
             animacionGanadorHecha = true;
           }, { once: true });
         }
@@ -790,6 +845,12 @@
   }
 
   const REFRESH_MS = 600;
+
+  btnRankingToggle.addEventListener('click', () => {
+    rankingVisible = !rankingVisible;
+    animacionGanadorHecha = false;
+    refreshEstado();
+  });
 
   function iniciarPolling() {
     refreshEstado();

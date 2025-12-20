@@ -424,6 +424,12 @@
     box-shadow: 0 0 0 1px rgba(251,191,36,.5);
   }
 
+  .opcion-btn--bloqueada {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
   /* OPCIONES — tamaño aumentado +15% */
   .opcion-img {
       width: 44px;   /* antes 38 */
@@ -595,6 +601,7 @@
   let ENCUESTAS = [];
   let encuestaActual = null;
   let opcionSeleccionada = null;
+  const bloqueadasLocal = new Map();
 
   const encuestasListSection = document.getElementById('encuestasListSection');
   const encuestaModalOverlay = document.getElementById('encuestaModalOverlay');
@@ -678,10 +685,7 @@
     });
   }
 
-  function abrirEncuesta(enc) {
-    encuestaActual = enc;
-    opcionSeleccionada = null;
-
+  function actualizarEncuesta(enc, abrirModal = false) {
     encuestaPanelTitle.innerText = enc.nombre.toUpperCase();
 
     let modoTxt = '';
@@ -694,9 +698,17 @@
     }
 
     encuestaPanelEstado.innerText = modoTxt;
-
     renderOpciones(enc);
-    openEncuestaModal();
+
+    if (abrirModal) {
+      openEncuestaModal();
+    }
+  }
+
+  function abrirEncuesta(enc) {
+    encuestaActual = enc;
+    opcionSeleccionada = null;
+    actualizarEncuesta(enc, true);
   }
 
   function renderOpciones(enc) {
@@ -708,15 +720,15 @@
     );
 
     const votosUsuario = (enc.votos_usuario || []).map(Number);
+    const bloqueadas = bloqueadasLocal.get(enc.id) || new Set();
 
     enc.opciones.forEach(opt => {
       const div = document.createElement('button');
       div.type = 'button';
       div.className = 'opcion-btn';
 
-      // Karaoke: opción bloqueada por otro
-      if (enc.unica_por_opcion && opt.es_bloqueada && !votosUsuario.includes(opt.id)) {
-        div.style.opacity = 0.4;
+      if (bloqueadas.has(opt.id) && !votosUsuario.includes(opt.id)) {
+        div.classList.add('opcion-btn--bloqueada');
         div.disabled = true;
       }
 
@@ -765,7 +777,8 @@
 
         if (encActualizada && encActualizada.estado === 'activa') {
           // sigue activa → refrescamos datos (opciones bloqueadas, etc.)
-          abrirEncuesta(encActualizada);
+          encuestaActual = encActualizada;
+          actualizarEncuesta(encActualizada, false);
         } else if (encuestaModalOverlay.style.display !== 'none') {
           // la encuesta ya no está activa o desapareció → cerramos panel SIEMPRE
           closeEncuestaModal();
@@ -802,12 +815,28 @@
 
       const json = await res.json();
       if (!res.ok || json.error) {
-        showToast(json.error || 'No se pudo registrar tu voto.');
+        const msg = json.error || 'No se pudo registrar tu voto.';
+        showToast(msg);
+
+        if (encuestaActual.unica_por_opcion && /tomada/i.test(msg)) {
+          const bloqueadas = bloqueadasLocal.get(encuestaActual.id) || new Set();
+          bloqueadas.add(opcionSeleccionada.id);
+          bloqueadasLocal.set(encuestaActual.id, bloqueadas);
+          opcionSeleccionada = null;
+          renderOpciones(encuestaActual);
+          btnConfirmarRespuesta.disabled = true;
+          return;
+        }
         btnConfirmarRespuesta.disabled = false;
         return;
       }
 
       showToast('¡Voto registrado!');
+      if (encuestaActual.unica_por_opcion) {
+        const bloqueadas = bloqueadasLocal.get(encuestaActual.id) || new Set();
+        bloqueadas.add(opcionSeleccionada.id);
+        bloqueadasLocal.set(encuestaActual.id, bloqueadas);
+      }
 
       // recargar encuestas para refrescar estado de opciones (bloqueadas, etc.)
       await cargarEncuestas(true);

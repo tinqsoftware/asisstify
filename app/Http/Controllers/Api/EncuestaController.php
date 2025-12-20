@@ -7,6 +7,7 @@ use App\Models\E_Evento;
 use App\Models\E_Encuesta;
 use App\Models\E_EncuestaOpcion;
 use App\Models\E_EncuestaVoto;
+use App\Models\E_EventoGrupoUsuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -170,10 +171,25 @@ class EncuestaController extends Controller
                 ->with('usuario')
                 ->get();
 
+            $grupoPorUsuario = [];
+            $userIds = $votosKaraoke->pluck('usuario_id')->filter()->unique()->values();
+            if ($userIds->isNotEmpty()) {
+                $grupoPorUsuario = E_EventoGrupoUsuario::whereIn('usuario_id', $userIds)
+                    ->whereHas('grupo', function ($q) use ($encuesta) {
+                        $q->where('evento_id', $encuesta->evento_id);
+                    })
+                    ->with('grupo')
+                    ->get()
+                    ->keyBy('usuario_id')
+                    ->map(fn($row) => $row->grupo?->nombre)
+                    ->toArray();
+            }
+
             foreach ($votosKaraoke as $v) {
                 $nombre = $v->usuario ? $v->usuario->name : $v->nombre_invitado;
                 if ($nombre) {
-                    $asignaciones[$v->opcion_id] = $nombre;
+                    $grupo = $v->usuario_id ? ($grupoPorUsuario[$v->usuario_id] ?? null) : null;
+                    $asignaciones[$v->opcion_id] = $grupo ? ($grupo . ' - ' . $nombre) : $nombre;
                 }
             }
         }

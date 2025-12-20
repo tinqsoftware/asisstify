@@ -522,6 +522,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     return texto;
   }
 
+  function buildRepeatGreeting(nombreCompleto, grupo) {
+    const primerNombre = firstName(nombreCompleto);
+    if (grupo) {
+      return `${primerNombre} tu grupo es ${grupo}.`;
+    }
+    return `${primerNombre}.`;
+  }
+
   function mostrarBienvenida(nombreCompleto, sexo, grupo) {
     const primer = firstName(nombreCompleto);
     bienvenidaNombre.textContent = `${genderWordFor(sexo)} ${primer}`;
@@ -704,7 +712,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const usuario = resp.usuario || {};
         mostrarBienvenida(usuario.nombre, usuario.sexo, usuario.grupo);
-        if (!resp.ya_existia) {
+        if (resp.ya_existia) {
+          const texto = buildRepeatGreeting(usuario.nombre, usuario.grupo);
+          tts.speak(texto);
+        } else {
           const texto = buildGreeting(usuario.nombre, usuario.sexo, usuario.grupo);
           tts.speak(texto);
         }
@@ -898,7 +909,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           const usuario = resp.usuario || { nombre: best.nombre, sexo: best.sexo };
           mostrarBienvenida(usuario.nombre, usuario.sexo || best.sexo, usuario.grupo);
-          if (!resp.ya_existia) {
+          if (resp.ya_existia) {
+            const texto = buildRepeatGreeting(usuario.nombre, usuario.grupo);
+            tts.speak(texto);
+          } else {
             const texto = buildGreeting(usuario.nombre, usuario.sexo || best.sexo, usuario.grupo);
             tts.speak(texto);
           }

@@ -57,11 +57,20 @@ class E_EventoGrupoController extends Controller
             ];
         })->values();
 
+        $asistidosUsuarioIds = E_AsistenciaActividad::whereHas('actividad.dia', function ($q) use ($evento) {
+                $q->where('evento_id', $evento->id);
+            })
+            ->where('metodo_entrada', '!=', 'confirmacion')
+            ->pluck('usuario_id')
+            ->filter()
+            ->unique()
+            ->values();
+
         $gruposEntidad = E_GrupoEntidad::where('entidad_id', $evento->entidad_id)
             ->orderBy('nombre')
             ->get(['id', 'nombre']);
 
-        return view('admin.eventos.grupos', compact('evento', 'grupos', 'confirmados', 'gruposEntidad', 'grupoEntidadPorUsuario'));
+        return view('admin.eventos.grupos', compact('evento', 'grupos', 'confirmados', 'gruposEntidad', 'grupoEntidadPorUsuario', 'asistidosUsuarioIds'));
     }
 
     public function store(Request $request, E_Evento $evento)

@@ -46,6 +46,34 @@
     border: 1px solid rgba(148, 163, 184, 0.35);
     color: #e5e7eb;
   }
+  .grupo-badge-asistencia {
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: #bbf7d0;
+  }
+  .badge-asistio {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: #bbf7d0;
+    font-size: .62rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+  }
+  .badge-asistio-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+  }
   .grupo-list {
     max-height: 260px;
     overflow: auto;
@@ -108,12 +136,14 @@
       @php
         $grupoId = 'eventoGrupo' . $grupo->id;
         $miembrosGrupo = $grupo->usuarios;
+        $asistidosCount = $miembrosGrupo->filter(fn($m) => $asistidosUsuarioIds->contains($m->id))->count();
       @endphp
       <div class="grupo-card accordion-item bg-transparent border-0">
         <div class="accordion-header d-flex justify-content-between align-items-center" id="heading{{ $grupoId }}">
           <button class="accordion-button collapsed bg-transparent text-light border rounded" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $grupoId }}" aria-expanded="false">
             <strong>{{ $grupo->nombre }}</strong>
             <span class="ms-3 grupo-badge-count">Miembros: {{ $miembrosGrupo->count() }}</span>
+            <span class="ms-2 grupo-badge-asistencia">Asistencias: {{ $asistidosCount }}</span>
           </button>
           <button type="button" class="btn btn-sm btn-outline-warning ms-2" data-bs-toggle="modal" data-bs-target="#modalMiembros{{ $grupo->id }}">
             Agregar miembros
@@ -138,7 +168,12 @@
                       <tr>
                         <td>{{ trim(($miembro->name ?? '') . ' ' . ($miembro->apellidos ?? '')) }}</td>
                         <td>{{ $miembro->nro_documento ?? '—' }}</td>
-                        <td>{{ $grupoEntidadPorUsuario[$miembro->id] ?? '—' }}</td>
+                        <td>
+                          {{ $grupoEntidadPorUsuario[$miembro->id] ?? '—' }}
+                          @if($asistidosUsuarioIds->contains($miembro->id))
+                            <span class="badge-asistio ms-2"><span class="badge-asistio-dot"></span>Asistió</span>
+                          @endif
+                        </td>
                       </tr>
                     @endforeach
                   </tbody>
