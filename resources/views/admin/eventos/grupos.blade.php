@@ -96,9 +96,75 @@
     color: #9ca3af;
     font-size: .85rem;
   }
+  .grupo-card .accordion-header {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .grupo-card .accordion-button {
+    flex: 1 1 auto;
+    gap: 8px;
+  }
   @media (max-width: 768px) {
     .grupo-shell {
-      padding: 16px;
+      padding: 14px;
+    }
+    .grupo-title {
+      font-size: 1.15rem;
+    }
+    .grupo-form {
+      padding: 10px;
+    }
+    .grupo-form .form-control {
+      font-size: .9rem;
+      padding: .5rem .65rem;
+    }
+    .grupo-form .btn {
+      padding: .5rem .8rem;
+      font-size: .9rem;
+    }
+    .grupo-card {
+      padding: 10px;
+    }
+    .grupo-card .accordion-header {
+      align-items: stretch;
+    }
+    .grupo-card .accordion-button {
+      padding: .6rem .75rem;
+      font-size: .92rem;
+      flex: 1 1 100%;
+      order: 1;
+    }
+    .grupo-card .btn-outline-warning {
+      width: 100%;
+      order: 2;
+      margin-left: 0 !important;
+    }
+    .grupo-badge-count,
+    .grupo-badge-asistencia {
+      font-size: .58rem;
+      padding: 3px 8px;
+    }
+    .grupo-miembros-table {
+      font-size: .85rem;
+    }
+    .grupo-miembros-table th,
+    .grupo-miembros-table td {
+      padding: .4rem .5rem;
+    }
+    .grupo-list {
+      max-height: 220px;
+    }
+  }
+  @media (max-width: 480px) {
+    .grupo-badge-count,
+    .grupo-badge-asistencia {
+      letter-spacing: .08em;
+    }
+    .grupo-card .accordion-button strong {
+      font-size: .95rem;
+    }
+    .grupo-miembros-table {
+      font-size: .8rem;
     }
   }
 </style>

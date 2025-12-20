@@ -441,6 +441,13 @@
     box-shadow:
       0 22px 50px rgba(0,0,0,.9),
       0 0 0 2px rgba(251,191,36,.45);
+    animation: winnerFloat 6.5s ease-in-out infinite;
+  }
+
+  @keyframes winnerFloat {
+    0% { transform: translateY(-10px) scale(1.22); }
+    50% { transform: translateY(-22px) scale(1.26); }
+    100% { transform: translateY(-10px) scale(1.22); }
   }
  
 
@@ -770,7 +777,7 @@
         const drift = 8 + Math.random() * 18;
         card.style.setProperty('--drift', drift.toFixed(0) + 'px');
         card.style.setProperty('--drift-delay', (Math.random() * 0.6).toFixed(2) + 's');
-        card.style.setProperty('--drift-duration', (6.2 + Math.random() * 3.2).toFixed(2) + 's');
+        card.style.setProperty('--drift-duration', (5.2 + Math.random() * 2.2).toFixed(2) + 's');
       }
 
       return card;

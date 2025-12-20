@@ -23,15 +23,15 @@
 
   <ul class="nav nav-tabs mb-3">
     <li class="nav-item">
-      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabGeneral" type="button">General</button>
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabGeneral" type="button">General</button>
     </li>
     <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabGrupos" type="button">Por grupos</button>
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabGrupos" type="button">Por grupos</button>
     </li>
   </ul>
 
   <div class="tab-content">
-    <div class="tab-pane fade show active" id="tabGeneral">
+    <div class="tab-pane fade" id="tabGeneral">
       <table id="tablaAsistencias" class="table table-bordered table-striped w-100">
         <thead class="table-light">
           <tr>
@@ -67,7 +67,7 @@
         </tbody>
       </table>
     </div>
-    <div class="tab-pane fade" id="tabGrupos">
+    <div class="tab-pane fade show active" id="tabGrupos">
       <div class="accordion" id="gruposAccordion">
         @foreach($gruposDetalle as $grupoNombre => $detalle)
           @php $grupoId = 'grupo' . md5($grupoNombre); @endphp
