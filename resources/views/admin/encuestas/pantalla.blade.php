@@ -651,7 +651,7 @@
     const opciones = data.opciones || [];
     const totalVotos = data.total_votos ?? 0;
     const adminLiveActivo = ADMIN_LIVE && e.estado === 'activa';
-    const shuffleActivo = !adminLiveActivo && e.estado === 'activa';
+    const shuffleActivo = !adminLiveActivo && e.estado === 'activa' && !e.unica_por_opcion;
     const showRankingToggle = !e.unica_por_opcion && e.estado === 'cerrada';
 
     // textos básicos
