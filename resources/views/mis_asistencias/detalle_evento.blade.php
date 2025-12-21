@@ -421,7 +421,10 @@
 
   .opcion-btn.selected {
     border-color: rgba(251, 191, 36, 1);
-    box-shadow: 0 0 0 1px rgba(251,191,36,.5);
+    box-shadow:
+      0 0 0 2px rgba(251,191,36,.8),
+      0 8px 18px rgba(251,191,36,.25);
+    background: linear-gradient(135deg, rgba(251,191,36,.18), rgba(251,191,36,.05));
   }
 
   .opcion-btn--bloqueada {
@@ -602,6 +605,7 @@
   let encuestaActual = null;
   let opcionSeleccionada = null;
   const bloqueadasLocal = new Map();
+  const seleccionPendiente = new Map();
 
   const encuestasListSection = document.getElementById('encuestasListSection');
   const encuestaModalOverlay = document.getElementById('encuestaModalOverlay');
@@ -638,10 +642,16 @@
   }
 
   function closeEncuestaModal() {
+    const encuestaId = encuestaActual ? encuestaActual.id : null;
     encuestaModalOverlay.style.display = 'none';
     document.body.classList.remove('modal-open');
     encuestaActual = null;
     opcionSeleccionada = null;
+    btnConfirmarRespuesta.disabled = true;
+    btnConfirmarRespuesta.style.display = '';
+    if (encuestaId) {
+      seleccionPendiente.delete(encuestaId);
+    }
   }
 
   function renderButtons() {
@@ -714,6 +724,7 @@
   function renderOpciones(enc) {
     encuestaOpciones.innerHTML = '';
     btnConfirmarRespuesta.disabled = true;
+    btnConfirmarRespuesta.style.display = '';
     encuestaOpciones.classList.toggle(
       'encuesta-opciones--dos-columnas',
       (enc.opciones || []).length >= 20
@@ -721,6 +732,8 @@
 
     const votosUsuario = (enc.votos_usuario || []).map(Number);
     const bloqueadas = bloqueadasLocal.get(enc.id) || new Set();
+    const seleccionGuardada = seleccionPendiente.get(enc.id);
+    const bloquearResto = !enc.permitir_cambiar_voto && votosUsuario.length > 0;
 
     enc.opciones.forEach(opt => {
       const div = document.createElement('button');
@@ -735,6 +748,14 @@
       if (votosUsuario.includes(opt.id)) {
         div.classList.add('selected');
         opcionSeleccionada = opt;
+      }
+      if (!votosUsuario.length && seleccionGuardada === opt.id) {
+        div.classList.add('selected');
+        opcionSeleccionada = opt;
+      }
+      if (bloquearResto && !div.classList.contains('selected')) {
+        div.classList.add('opcion-btn--bloqueada');
+        div.disabled = true;
       }
 
       div.innerHTML = `
@@ -751,6 +772,7 @@
         encuestaOpciones.querySelectorAll('.opcion-btn').forEach(b => b.classList.remove('selected'));
         div.classList.add('selected');
         opcionSeleccionada = opt;
+        seleccionPendiente.set(enc.id, opt.id);
         btnConfirmarRespuesta.disabled = false;
       });
 
@@ -758,8 +780,15 @@
     });
 
     // Si ya tenía voto y NO puede cambiar, deshabilitamos botón
-    if (opcionSeleccionada) {
-      btnConfirmarRespuesta.disabled = !enc.permitir_cambiar_voto;
+    if (opcionSeleccionada && votosUsuario.length) {
+      if (!enc.permitir_cambiar_voto) {
+        btnConfirmarRespuesta.disabled = true;
+        btnConfirmarRespuesta.style.display = 'none';
+      } else {
+        btnConfirmarRespuesta.disabled = false;
+      }
+    } else if (opcionSeleccionada && !votosUsuario.length) {
+      btnConfirmarRespuesta.disabled = false;
     }
   }
 
@@ -837,11 +866,11 @@
         bloqueadas.add(opcionSeleccionada.id);
         bloqueadasLocal.set(encuestaActual.id, bloqueadas);
       }
-
-      // recargar encuestas para refrescar estado de opciones (bloqueadas, etc.)
-      await cargarEncuestas(true);
-      const encActualizada = ENCUESTAS.find(e => e.id === encuestaActual.id);
-      if (encActualizada) abrirEncuesta(encActualizada);
+      seleccionPendiente.delete(encuestaActual.id);
+      setTimeout(() => {
+        window.location.reload();
+      }, 400);
+      return;
 
     } catch (e) {
       console.error(e);
